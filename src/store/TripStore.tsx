@@ -14,8 +14,8 @@ const starterTrip: TripState = {
     { id: 'plan-3', day: '2026-11-21', time: '18:30', title: '우동 저녁 식사', category: '식사', durationMinutes: 60, fixed: false, status: 'planned' },
   ],
   places: [
-    { id: 'place-1', name: '시부야 스카이', category: '관광', area: '시부야', note: '일몰 30분 전 입장 후보' },
-    { id: 'place-2', name: '도쿄역', category: '교통', area: '마루노우치', note: '공항버스 승하차 위치 확인' },
+    { id: 'place-1', name: '시부야 스카이', category: '관광', area: '시부야', note: '일몰 30분 전 입장 후보', latitude: 35.6584, longitude: 139.7022 },
+    { id: 'place-2', name: '도쿄역', category: '교통', area: '마루노우치', note: '공항버스 승하차 위치 확인', latitude: 35.6812, longitude: 139.7671 },
   ],
   shopping: [
     { id: 'shop-1', name: '일본 한정 과자', store: '돈키호테 시부야점', quantity: 2, priceYen: 698, status: 'planned' },

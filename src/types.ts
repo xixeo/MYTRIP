@@ -5,7 +5,7 @@ export interface ItineraryItem {
   id: string; day: string; time: string; title: string; category: string;
   durationMinutes: number; fixed: boolean; status: ItineraryStatus;
 }
-export interface SavedPlace { id: string; name: string; category: string; area: string; note: string }
+export interface SavedPlace { id: string; name: string; category: string; area: string; note: string; latitude?: number; longitude?: number }
 export interface ShoppingItem { id: string; name: string; store: string; quantity: number; priceYen?: number; status: ShoppingStatus }
 export interface TravelInfoItem { id: string; type: 'reservation' | 'checklist'; title: string; detail: string; complete: boolean }
 export interface TripState {
