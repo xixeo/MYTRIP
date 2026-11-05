@@ -1,0 +1,15 @@
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Screen } from '@/components/Screen';
+import { Card, Field, Pill, PrimaryButton, SectionTitle } from '@/components/ui';
+import { useTrip } from '@/store/TripStore';
+import { colors } from '@/theme';
+
+const statusLabel = { planned: '구매 예정', bought: '구매 완료', hold: '보류' };
+export default function ShoppingScreen() {
+  const { state, addShopping, cycleShopping } = useTrip(); const [name, setName] = useState('');
+  const submit = () => { if (name.trim()) { addShopping({ name: name.trim(), store: '매장 미정' }); setName(''); } };
+  const total = state.shopping.filter((item) => item.status === 'bought').reduce((sum, item) => sum + (item.priceYen ?? 0) * item.quantity, 0);
+  return <Screen title="쇼핑리스트" eyebrow="상품 · 가격"><Card style={styles.summary}><View><Text style={styles.summaryLabel}>기록된 구매 금액</Text><Text style={styles.summaryValue}>¥ {total.toLocaleString()}</Text></View><Pill tone="orange">{state.shopping.filter((item) => item.status === 'bought').length}개 완료</Pill></Card><SectionTitle title="빠른 등록" /><Card style={styles.form}><Field placeholder="상품 이름" value={name} onChangeText={setName} onSubmitEditing={submit} /><PrimaryButton compact label="추가" onPress={submit} /></Card><SectionTitle title="구매 계획" />{state.shopping.map((item) => <Pressable key={item.id} onPress={() => cycleShopping(item.id)}><Card style={[styles.item, item.status === 'bought' && styles.bought]}><View style={[styles.check, item.status === 'bought' && styles.checked]}><Text style={styles.checkText}>{item.status === 'bought' ? '✓' : item.quantity}</Text></View><View style={styles.copy}><Text style={[styles.name, item.status === 'bought' && styles.strike]}>{item.name}</Text><Text style={styles.meta}>{item.store}{item.priceYen ? ` · ¥${item.priceYen.toLocaleString()}` : ' · 가격 미확인'}</Text></View><Pill tone={item.status === 'hold' ? 'gray' : item.status === 'bought' ? 'teal' : 'orange'}>{statusLabel[item.status]}</Pill></Card></Pressable>)}<Text style={styles.guide}>항목을 누르면 구매 예정 → 완료 → 보류 순서로 바뀝니다. 표시 가격은 사용자가 기록한 참고값입니다.</Text></Screen>;
+}
+const styles = StyleSheet.create({ summary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.tealSoft }, summaryLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' }, summaryValue: { color: colors.ink, fontSize: 26, fontWeight: '900', marginTop: 3 }, form: { flexDirection: 'row', gap: 10 }, item: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 }, bought: { opacity: 0.68 }, check: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', marginRight: 12 }, checked: { backgroundColor: colors.tealSoft }, checkText: { color: colors.primary, fontWeight: '900' }, copy: { flex: 1 }, name: { color: colors.ink, fontSize: 16, fontWeight: '800' }, strike: { textDecorationLine: 'line-through' }, meta: { color: colors.muted, fontSize: 12, marginTop: 4 }, guide: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 8 } });
