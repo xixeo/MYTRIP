@@ -9,6 +9,8 @@ export interface SavedPlace { id: string; name: string; category: string; area: 
 export interface ShoppingItem { id: string; name: string; store: string; quantity: number; priceYen?: number; status: ShoppingStatus }
 export interface TravelInfoItem { id: string; type: 'reservation' | 'checklist'; title: string; detail: string; complete: boolean }
 export interface TripState {
-  trip: { name: string; destination: string; startDate: string; endDate: string };
+  trip: { id: string; name: string; destination: string; startDate: string; endDate: string };
   itinerary: ItineraryItem[]; places: SavedPlace[]; shopping: ShoppingItem[]; info: TravelInfoItem[];
 }
+
+export interface AppState { activeTripId: string; trips: TripState[] }
