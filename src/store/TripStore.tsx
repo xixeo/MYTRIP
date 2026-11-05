@@ -1,7 +1,7 @@
 import Storage from '@react-native-async-storage/async-storage';
 import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
-import { AppState, ItineraryItem, SavedPlace, ShoppingItem, TripState } from '@/types';
+import { AppState, Flight, ItineraryItem, SavedPlace, ShoppingItem, TripState } from '@/types';
 
 const STORAGE_KEY = 'mytrip.state.v2';
 const LEGACY_STORAGE_KEY = 'mytrip.state.v1';
@@ -26,6 +26,7 @@ const starterTrip: TripState = {
     { id: 'info-2', type: 'checklist', title: '여권', detail: '유효기간 확인', complete: true },
     { id: 'info-3', type: 'checklist', title: 'eSIM 설치', detail: '출국 전 활성화 확인', complete: false },
   ],
+  flights: [],
 };
 const initialAppState: AppState = { activeTripId: starterTrip.trip.id, trips: [starterTrip] };
 
@@ -34,17 +35,23 @@ type NewPlan = Pick<ItineraryItem, 'title' | 'time' | 'category' | 'day'>;
 type PlanUpdate = Partial<Pick<ItineraryItem, 'title' | 'time' | 'category' | 'day' | 'durationMinutes' | 'fixed'>>;
 type NewPlace = Pick<SavedPlace, 'name' | 'category' | 'area'>;
 type NewShopping = Pick<ShoppingItem, 'name' | 'store'>;
+type FlightInput = Omit<Flight, 'id'>;
 interface TripContextValue {
   state: TripState; trips: TripState[]; hydrated: boolean;
   createTrip: (input: TripInput) => string; updateTrip: (id: string, input: TripInput) => void; deleteTrip: (id: string) => void; selectTrip: (id: string) => void;
   addPlan: (plan: NewPlan) => void; updatePlan: (id: string, update: PlanUpdate) => void; deletePlan: (id: string) => void; togglePlan: (id: string) => void; movePlan: (id: string, direction: -1 | 1) => void;
   addPlace: (place: NewPlace) => void; addShopping: (item: NewShopping) => void; cycleShopping: (id: string) => void; toggleInfo: (id: string) => void; addChecklist: (title: string) => void;
+  saveFlight: (id: string | undefined, input: FlightInput) => void; deleteFlight: (id: string) => void;
 }
 const TripContext = createContext<TripContextValue | null>(null);
 
-function migrateLegacy(legacy: TripState): AppState {
+function normalizeTrip(legacy: TripState): TripState {
   const id = legacy.trip.id ?? 'trip-migrated';
-  return { activeTripId: id, trips: [{ ...legacy, trip: { ...legacy.trip, id }, itinerary: legacy.itinerary.map((item) => ({ ...item, day: item.day.includes('-') ? item.day : legacy.trip.startDate })) }] };
+  return { ...legacy, trip: { ...legacy.trip, id }, itinerary: legacy.itinerary.map((item) => ({ ...item, day: item.day.includes('-') ? item.day : legacy.trip.startDate })), flights: legacy.flights ?? [] };
+}
+function migrateLegacy(legacy: TripState): AppState {
+  const trip = normalizeTrip(legacy);
+  return { activeTripId: trip.trip.id, trips: [trip] };
 }
 
 export function TripProvider({ children }: PropsWithChildren) {
@@ -54,7 +61,7 @@ export function TripProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     Promise.all([Storage.getItem(STORAGE_KEY), Storage.getItem(LEGACY_STORAGE_KEY)]).then(([saved, legacy]) => {
-      if (saved) setAppState(JSON.parse(saved) as AppState);
+      if (saved) { const parsed = JSON.parse(saved) as AppState; setAppState({ ...parsed, trips: parsed.trips.map(normalizeTrip) }); }
       else if (legacy) setAppState(migrateLegacy(JSON.parse(legacy) as TripState));
     }).catch(() => undefined).finally(() => setHydrated(true));
   }, []);
@@ -63,7 +70,7 @@ export function TripProvider({ children }: PropsWithChildren) {
   const updateActive = (updater: (trip: TripState) => TripState) => setAppState((current) => ({ ...current, trips: current.trips.map((trip) => trip.trip.id === current.activeTripId ? updater(trip) : trip) }));
   const value = useMemo<TripContextValue>(() => ({
     state: active, trips: appState.trips, hydrated,
-    createTrip: (input) => { const id = makeId('trip'); const next: TripState = { trip: { id, ...input }, itinerary: [], places: [], shopping: [], info: [] }; setAppState((current) => ({ activeTripId: id, trips: [...current.trips, next] })); return id; },
+    createTrip: (input) => { const id = makeId('trip'); const next: TripState = { trip: { id, ...input }, itinerary: [], places: [], shopping: [], info: [], flights: [] }; setAppState((current) => ({ activeTripId: id, trips: [...current.trips, next] })); return id; },
     updateTrip: (id, input) => setAppState((current) => ({ ...current, trips: current.trips.map((trip) => trip.trip.id === id ? { ...trip, trip: { ...trip.trip, ...input } } : trip) })),
     deleteTrip: (id) => setAppState((current) => { if (current.trips.length === 1) return current; const trips = current.trips.filter((trip) => trip.trip.id !== id); return { trips, activeTripId: current.activeTripId === id ? trips[0].trip.id : current.activeTripId }; }),
     selectTrip: (id) => setAppState((current) => ({ ...current, activeTripId: id })),
@@ -82,6 +89,8 @@ export function TripProvider({ children }: PropsWithChildren) {
     cycleShopping: (id) => updateActive((trip) => ({ ...trip, shopping: trip.shopping.map((item) => item.id === id ? { ...item, status: item.status === 'planned' ? 'bought' : item.status === 'bought' ? 'hold' : 'planned' } : item) })),
     toggleInfo: (id) => updateActive((trip) => ({ ...trip, info: trip.info.map((item) => item.id === id ? { ...item, complete: !item.complete } : item) })),
     addChecklist: (title) => updateActive((trip) => ({ ...trip, info: [...trip.info, { id: makeId('info'), type: 'checklist', title, detail: '새 준비물', complete: false }] })),
+    saveFlight: (id, input) => updateActive((trip) => ({ ...trip, flights: id ? trip.flights.map((flight) => flight.id === id ? { id, ...input } : flight) : [...trip.flights, { id: makeId('flight'), ...input }] })),
+    deleteFlight: (id) => updateActive((trip) => ({ ...trip, flights: trip.flights.filter((flight) => flight.id !== id) })),
   }), [active, appState.trips, hydrated]);
   return <TripContext.Provider value={value}>{children}</TripContext.Provider>;
 }
