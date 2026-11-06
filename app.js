@@ -93,12 +93,12 @@
         : pub ? '곰탕 → 청주 2차 → 오창 숙소와 한잔' : '곰탕 → 청주 저녁 → 오창 레스트호텔',
       notice: tight ? '19:30 시장에서 출발하는 경우에 맞춘 안이야. 20:50 라스트오더에 늦을 것 같으면 꼬주망태 코스로 바꿔.' : '',
       rows: [
-        ['10:00',null,'서면 병원 상담','엄마와 함께','채원'],
-        ['10:55–11:00',null,'서면·전포에서 먼저 출발','오빠차까지 편도 약 30분 기준','건일'],
-        ['11:30','audio','오디오 수리 예약 희망 · 12:00 종료 예상',null,'건일'],
-        ['12:30–12:35',null,'서면역 복귀','채원과 합류','건일'],
-        ['12:45','home','채원과 건일이 함께 출발'],
-        [lunchTime,lunch,lunch === 'eonyang' ? '도착 예상 · 건일이 최애 소머리곰탕' : '도착 예상 · 영천공설시장 토렴 소머리곰탕'],
+        ['10:00',null,'개인 일정','출발 전 일정'],
+        ['10:55–11:00',null,'서면·전포에서 먼저 출발','차량 인수 장소까지 편도 약 30분 기준'],
+        ['11:30','audio','오디오 수리 예약 희망 · 12:00 종료 예상'],
+        ['12:30–12:35',null,'서면역 복귀','일행과 합류'],
+        ['12:45','home','일행과 함께 출발'],
+        [lunchTime,lunch,lunch === 'eonyang' ? '도착 예상 · 소머리곰탕' : '도착 예상 · 영천공설시장 토렴 소머리곰탕'],
         [market ? '19:00–' + (seafood ? '19:30' : '20:00') : '18:00–19:05', dinner, market ? (pub ? '야시장 시작에 맞춰 간식 · 새가덕순대는 대안' : '시장에서 저녁 · 식사 후 숙소로 이동') : '파절이 불고기 · 셀프볶음밥'],
         [market ? (seafood ? '20:00–20:20' : '20:30–20:50') : '19:30–19:55','rest','숙소 입실 · 차와 짐 두기'],
         ...afterCheckIn
@@ -182,7 +182,7 @@
     const ids = [...coursePlaces, ...rowPlaces(example.rows), ...branchPlaces, ...backup[day]];
     return [day, [...new Set(ids.filter(isVenue))]];
   }));
-  const tripStorageKey = 'chaewon-geonil-trip-vol1:selection';
+  const tripStorageKey = 'mytrip-weekend-vol1:selection';
   const copyPicks = picks => Object.fromEntries(dayInfo.map(([day]) => [day, [...picks[day]]]));
   const hasPicks = picks => dayInfo.some(([day]) => picks[day].length > 0);
 
