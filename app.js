@@ -39,20 +39,34 @@
     ? '<a class="button ' + className + '" href="' + esc(href) + '"' +
       (target ? ' target="' + target + '"' : '') + ' rel="noreferrer">' + esc(name) + ' ↗</a>' : '';
   const naverSearch = query => 'https://m.map.naver.com/search?query=' + encodeURIComponent(query);
-  const mapAddress = place => place.address.split(' · ')[0].replace(/ (?:일대|주차장)$/, '').trim();
-  const map = place => place.naverPlaceId
+  const mapAddress = place => (place.address || '').split(' · ')[0].replace(/ (?:일대|주차장)$/, '').trim();
+  const isKoreanPlace = place => {
+    const country = String(place.country || '').trim().toLowerCase();
+    if (country) return ['kr', 'kor', 'korea', 'south korea', '대한민국', '한국'].includes(country);
+    const {lat, lon} = place.coordinates || {};
+    if (Number.isFinite(lat) && Number.isFinite(lon)) return lat >= 32.5 && lat <= 39.8 && lon >= 123.5 && lon <= 132;
+    return /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|대한민국|한국)/.test([place.area, place.address, place.query].filter(Boolean).join(' '));
+  };
+  const placeQuery = place => place.query || mapAddress(place) || place.name;
+  const naverMap = place => place.naverPlaceId
     ? 'https://m.place.naver.com/place/' + place.naverPlaceId + '/location'
-    : naverSearch(place.query || mapAddress(place));
+    : naverSearch(placeQuery(place));
+  const googleMap = place => {
+    const {lat, lon} = place.coordinates || {};
+    const query = Number.isFinite(lat) && Number.isFinite(lon) ? `${lat},${lon}` : placeQuery(place);
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  };
   function tmap(place) {
-    if (!place.coordinates) return 'tmap://search?name=' + encodeURIComponent(place.query || mapAddress(place));
+    if (!place.coordinates) return 'tmap://search?name=' + encodeURIComponent(placeQuery(place));
     const {lon, lat} = place.coordinates;
     const name = encodeURIComponent(place.name);
     return 'tmap://route?' + (/Android/i.test(navigator.userAgent)
       ? 'goalname=' + name + '&goalx=' + lon + '&goaly=' + lat
       : 'rGoName=' + name + '&rGoX=' + lon + '&rGoY=' + lat);
   }
-  const mapLinks = (place, naverStyle = 'secondary') =>
-    link(map(place), '네이버 지도', naverStyle, mapTarget) + link(tmap(place), '티맵', 'secondary', mapTarget);
+  const mapLinks = (place, primaryStyle = 'secondary') => isKoreanPlace(place)
+    ? link(naverMap(place), '네이버 지도', primaryStyle, mapTarget) + link(tmap(place), '티맵', 'secondary', mapTarget)
+    : link(googleMap(place), 'Google Maps', primaryStyle, mapTarget);
 
   const formatCourseNumber = index => String(index).padStart(2, '0');
   const card = (day, course, selected) =>
@@ -439,7 +453,7 @@
     const options = lots.map(lot => '<li><b>' + esc(lot.name) + '</b>' +
       (lot.address ? '<p class="parking-address">' + esc(lot.address) + '</p>' : '') +
       '<p class="parking-note">' + esc(lot.note) + '</p><div class="parking-links">' +
-      link(map(lot), '주차장 지도', 'secondary', mapTarget) + link(lot.source, '요금·운영 안내') +
+      mapLinks(lot) + link(lot.source, '요금·운영 안내') +
       '</div></li>').join('');
     return '<section class="detail-parking" aria-labelledby="detail-parking-title">' +
       '<h3 id="detail-parking-title">주차 정보</h3><dl class="parking-facts">' +
@@ -447,7 +461,7 @@
       '<div><dt>무료·주차비 지원</dt><dd>' + esc(support) + '</dd></div></dl>' +
       (options ? '<h4>주차할 곳</h4><ul class="parking-options">' + options + '</ul>' : '') +
       '<div class="parking-links">' +
-      link(naverSearch(nearby + ' 주차장'), '주변 주차장 찾기', 'secondary', mapTarget) +
+      mapLinks({name: nearby + ' 주차장', address: nearby, country: place.country}) +
       sources.map(([label, href]) => link(href, label)).join('') +
       '</div><p class="parking-address">2026.11.06 공개 안내 기준 · 현장 안내 우선</p></section>';
   }
@@ -479,8 +493,8 @@
       '</p><ul class="menu-list">' + entries.map(([item, price]) => '<li><span>' + esc(item) +
       '</span><span class="menu-price">' + esc(price || '매장 확인') + '</span></li>').join('') + '</ul></section>' : '';
     const sourceLabel = isMenu(place) && !['야시장','뷔페'].includes(place.type) ? '메뉴판·사진 원문' : '상세 안내·사진';
-    const mapUrl = map(place);
-    const addressUrl = naverSearch(mapAddress(place));
+    const mapUrl = isKoreanPlace(place) ? naverMap(place) : googleMap(place);
+    const addressUrl = isKoreanPlace(place) ? naverSearch(mapAddress(place)) : googleMap({...place, query: mapAddress(place)});
     showPlaceDialog(heading +
       '<p class="detail-note">' + esc(place.note) + '</p>' +
       (place.picks ? '<p class="menu-pick">' + esc(place.picks) + '</p>' : '') +
