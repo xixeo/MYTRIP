@@ -503,6 +503,7 @@
       (place.picks ? '<p class="menu-pick">' + esc(place.picks) + '</p>' : '') +
       '<div class="detail-links">' + mapLinks(place, 'primary') +
       (addressUrl !== mapUrl ? link(addressUrl, '주소로 검색', 'secondary', mapTarget) : '') +
+      '<button type="button" class="button secondary" data-copy-place="' + esc(id) + '">내 장소로 저장·편집</button>' +
       link(place.menuSource || place.source,sourceLabel) +
       (place.menuSource && place.source !== place.menuSource ? link(place.source,'장소 안내') : '') +
       link(place.booking,'예약 화면') + catalog + phone + '</div>' +
@@ -519,6 +520,11 @@
     const target = event.target.closest('button');
     if (!target) return;
     const data = target.dataset;
+    if (data.copyPlace) {
+      dialog.close();
+      window.dispatchEvent(new CustomEvent('mytrip:copy-place', {detail:{sourceId:data.copyPlace, place:venues[data.copyPlace]}}));
+      return;
+    }
     if (data.shoppingPlace) {
       const place = venues[data.shoppingPlace];
       const item = place?.shoppingSuggestions?.[Number(data.shoppingIndex)];

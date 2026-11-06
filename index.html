@@ -18,6 +18,7 @@
   <script src="./expanded.js?v=trip-maps" defer></script>
   <script src="./app.js?v=parking" defer></script>
   <script src="./shopping.js" defer></script>
+  <script src="./planner-editor.js" defer></script>
 </head>
 <body id="top">
   <a href="#expanded-plan" class="skip">일정 바로가기</a>
@@ -73,6 +74,11 @@
         <p class="expanded-intro">11월 6일~8일 · 차량 이동, 주차, 식사와 대기 시간을 포함했어요. 예약·예식 시각 외에는 예상이에요.</p>
         <nav id="expanded-tabs" class="day-tabs" aria-label="고른 일정 날짜"></nav>
         <div id="expanded-panel" aria-live="polite"></div>
+        <section id="user-schedule" class="user-schedule" aria-labelledby="user-schedule-title">
+          <div class="user-section-head"><div><p class="shopping-kicker">MY SCHEDULE</p><h3 id="user-schedule-title">내가 추가한 일정</h3></div><button id="schedule-add" class="button primary" type="button">+ 일정 추가</button></div>
+          <p id="user-schedule-empty" class="trip-hint">등록한 장소를 날짜와 시간에 배치하면 여기에 표시돼요.</p>
+          <ol id="user-schedule-list" class="timeline user-timeline"></ol>
+        </section>
       </div>
     </section>
 
@@ -189,6 +195,11 @@
         <h2 id="places-title">장소와 메뉴</h2>
       </header>
       <div class="window-body">
+        <section class="place-manager" aria-labelledby="my-places-title">
+          <div class="user-section-head"><div><p class="shopping-kicker">MY PLACES</p><h3 id="my-places-title">내가 등록한 장소</h3><p>검색에 없거나 메모해 둘 장소를 직접 등록하고 일정에 연결하세요.</p></div><button id="place-add" class="button primary" type="button">+ 새 장소</button></div>
+          <p id="user-place-empty" class="trip-hint">아직 직접 등록한 장소가 없어요.</p>
+          <div id="user-place-grid" class="user-place-grid"></div>
+        </section>
         <div class="directory-controls">
           <label class="search">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
@@ -212,6 +223,42 @@
       <button class="dialog-close" type="button" aria-label="상세 닫기">×</button>
       <div id="place-detail"></div>
     </div>
+  </dialog>
+  <dialog id="place-editor-dialog" class="editor-dialog" aria-labelledby="place-editor-title">
+    <form id="place-editor-form" class="dialog-shell editor-form">
+      <button class="dialog-close" type="button" data-close-place-editor aria-label="장소 편집 닫기">×</button>
+      <p class="shopping-kicker">PLACE</p><h2 id="place-editor-title">새 장소 등록</h2>
+      <div class="editor-grid">
+        <label class="editor-wide"><span>장소 이름 *</span><input id="place-name" required maxlength="80" placeholder="예: 오사카성"></label>
+        <label><span>분류</span><select id="place-type"><option>관광</option><option>식당</option><option>카페</option><option>쇼핑</option><option>숙소</option><option>교통</option><option>기타</option></select></label>
+        <label><span>국가</span><input id="place-country" maxlength="40" placeholder="예: 한국, 일본"></label>
+        <label class="editor-wide"><span>주소 *</span><input id="place-address" required maxlength="160" placeholder="도로명 또는 현지 주소"></label>
+        <label><span>현지어 이름</span><input id="place-local-name" maxlength="80" placeholder="원문 이름"></label>
+        <label><span>전화</span><input id="place-phone" type="tel" maxlength="40" placeholder="매장 연락처"></label>
+        <label class="editor-wide"><span>웹사이트·예약 링크</span><input id="place-website" type="url" maxlength="300" placeholder="https://"></label>
+        <label><span>위도</span><input id="place-lat" type="number" step="any" placeholder="선택"></label>
+        <label><span>경도</span><input id="place-lon" type="number" step="any" placeholder="선택"></label>
+        <label><span>직접 확인일</span><input id="place-checked-at" type="date"></label>
+        <label class="editor-wide"><span>메모</span><textarea id="place-note" rows="3" maxlength="500" placeholder="휴무, 브레이크타임, 예약 방법, 출처 등을 기록하세요."></textarea></label>
+      </div>
+      <p class="editor-help">입력하지 않은 정보는 임의로 확정하지 않고 ‘미확인’으로 표시합니다.</p>
+      <div class="editor-actions"><button id="place-delete" class="button danger" type="button" hidden>장소 삭제</button><button class="button secondary" type="button" data-close-place-editor>취소</button><button class="button primary" type="submit">저장</button></div>
+    </form>
+  </dialog>
+  <dialog id="schedule-editor-dialog" class="editor-dialog" aria-labelledby="schedule-editor-title">
+    <form id="schedule-editor-form" class="dialog-shell editor-form">
+      <button class="dialog-close" type="button" data-close-schedule-editor aria-label="일정 편집 닫기">×</button>
+      <p class="shopping-kicker">SCHEDULE</p><h2 id="schedule-editor-title">일정에 장소 추가</h2>
+      <div class="editor-grid">
+        <label class="editor-wide"><span>장소 *</span><select id="schedule-place" required></select></label>
+        <label><span>날짜</span><select id="schedule-day"><option value="fri">11월 6일 금요일</option><option value="sat">11월 7일 토요일</option><option value="sun">11월 8일 일요일</option></select></label>
+        <label><span>시작 시간</span><input id="schedule-time" type="time" required value="10:00"></label>
+        <label><span>체류시간(분)</span><input id="schedule-duration" type="number" min="0" max="1440" step="10" value="60"></label>
+        <label class="editor-check"><input id="schedule-fixed" type="checkbox"><span>예약 등 고정 일정</span></label>
+        <label class="editor-wide"><span>일정 메모</span><textarea id="schedule-note" rows="2" maxlength="300" placeholder="예약 시각, 주문 마감, 이동 메모"></textarea></label>
+      </div>
+      <div class="editor-actions"><button id="schedule-delete" class="button danger" type="button" hidden>일정 삭제</button><button class="button secondary" type="button" data-close-schedule-editor>취소</button><button class="button primary" type="submit">저장</button></div>
+    </form>
   </dialog>
 </body>
 </html>
