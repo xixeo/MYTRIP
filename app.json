@@ -30,7 +30,8 @@
         {
           "locationWhenInUsePermission": "MYTRIP이 실제 이동 경로를 기록하려면 위치 접근이 필요합니다."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true

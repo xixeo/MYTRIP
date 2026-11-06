@@ -49,6 +49,7 @@ interface TripContextValue {
   saveShopping: (id: string | undefined, input: ShoppingInput) => void; deleteShopping: (id: string) => void; addPrice: (shoppingId: string, input: PriceInput) => void; deletePrice: (shoppingId: string, priceId: string) => void;
   saveFlight: (id: string | undefined, input: FlightInput) => void; deleteFlight: (id: string) => void;
   saveReservation: (id: string | undefined, input: ReservationInput) => void; deleteReservation: (id: string) => void;
+  setFlightNotification: (id: string, notificationId?: string) => void; setReservationNotification: (id: string, notificationId?: string) => void;
   createTrackSession: (id: string, startedAt: number) => void; setTrackStatus: (id: string, status: 'recording' | 'paused' | 'finished') => void; appendTrackPoint: (id: string, point: TrackPoint) => void; deleteTrackSession: (id: string) => void;
 }
 const TripContext = createContext<TripContextValue | null>(null);
@@ -105,10 +106,12 @@ export function TripProvider({ children }: PropsWithChildren) {
     deleteShopping: (id) => updateActive((trip) => ({ ...trip, shopping: trip.shopping.filter((item) => item.id !== id) })),
     addPrice: (shoppingId, input) => updateActive((trip) => ({ ...trip, shopping: trip.shopping.map((item) => item.id === shoppingId ? { ...item, prices: [...item.prices, { id: makeId('price'), ...input }] } : item) })),
     deletePrice: (shoppingId, priceId) => updateActive((trip) => ({ ...trip, shopping: trip.shopping.map((item) => item.id === shoppingId ? { ...item, prices: item.prices.filter((price) => price.id !== priceId) } : item) })),
-    saveFlight: (id, input) => updateActive((trip) => ({ ...trip, flights: id ? trip.flights.map((flight) => flight.id === id ? { id, ...input } : flight) : [...trip.flights, { id: makeId('flight'), ...input }] })),
+    saveFlight: (id, input) => updateActive((trip) => ({ ...trip, flights: id ? trip.flights.map((flight) => flight.id === id ? { ...flight, ...input, id } : flight) : [...trip.flights, { id: makeId('flight'), ...input }] })),
     deleteFlight: (id) => updateActive((trip) => ({ ...trip, flights: trip.flights.filter((flight) => flight.id !== id) })),
-    saveReservation: (id, input) => updateActive((trip) => ({ ...trip, reservations: id ? trip.reservations.map((item) => item.id === id ? { id, ...input } : item) : [...trip.reservations, { id: makeId('reservation'), ...input }] })),
+    saveReservation: (id, input) => updateActive((trip) => ({ ...trip, reservations: id ? trip.reservations.map((item) => item.id === id ? { ...item, ...input, id } : item) : [...trip.reservations, { id: makeId('reservation'), ...input }] })),
     deleteReservation: (id) => updateActive((trip) => ({ ...trip, reservations: trip.reservations.filter((item) => item.id !== id) })),
+    setFlightNotification: (id, notificationId) => updateActive((trip) => ({ ...trip, flights: trip.flights.map((item) => item.id === id ? { ...item, notificationId } : item) })),
+    setReservationNotification: (id, notificationId) => updateActive((trip) => ({ ...trip, reservations: trip.reservations.map((item) => item.id === id ? { ...item, notificationId } : item) })),
     createTrackSession: (id, startedAt) => updateActive((trip) => ({ ...trip, trackSessions: [...trip.trackSessions, { id, startedAt, status: 'recording', points: [] }] })),
     setTrackStatus: (id, status) => updateActive((trip) => ({ ...trip, trackSessions: trip.trackSessions.map((session) => session.id === id ? { ...session, status, ...(status === 'finished' ? { endedAt: Date.now() } : {}) } : session) })),
     appendTrackPoint: (id, point) => updateActive((trip) => ({ ...trip, trackSessions: trip.trackSessions.map((session) => session.id === id ? { ...session, points: [...session.points, point] } : session) })),
