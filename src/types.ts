@@ -18,7 +18,7 @@ export interface Flight {
   notificationId?: string;
 }
 export interface TripState {
-  trip: { id: string; name: string; destination: string; startDate: string; endDate: string };
+  trip: { id: string; name: string; destination: string; startDate: string; endDate: string; cloudId?: string; cloudVersion?: number };
   itinerary: ItineraryItem[]; places: SavedPlace[]; shopping: ShoppingItem[]; info: TravelInfoItem[]; flights: Flight[]; reservations: Reservation[]; trackSessions: TrackSession[];
 }
 
