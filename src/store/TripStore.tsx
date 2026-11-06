@@ -44,6 +44,7 @@ type ReservationInput = Omit<Reservation, 'id'>;
 interface TripContextValue {
   state: TripState; trips: TripState[]; hydrated: boolean;
   createTrip: (input: TripInput) => string; updateTrip: (id: string, input: TripInput) => void; deleteTrip: (id: string) => void; selectTrip: (id: string) => void;
+  duplicateTrip: (id: string) => void;
   addPlan: (plan: NewPlan) => void; updatePlan: (id: string, update: PlanUpdate) => void; deletePlan: (id: string) => void; togglePlan: (id: string) => void; movePlan: (id: string, direction: -1 | 1) => void;
   addPlace: (place: NewPlace) => void; savePlace: (id: string | undefined, input: PlaceInput) => void; deletePlace: (id: string) => void; addShopping: (item: NewShopping) => void; cycleShopping: (id: string) => void; toggleInfo: (id: string) => void; addChecklist: (title: string) => void; deleteInfo: (id: string) => void;
   saveShopping: (id: string | undefined, input: ShoppingInput) => void; deleteShopping: (id: string) => void; addPrice: (shoppingId: string, input: PriceInput) => void; deletePrice: (shoppingId: string, priceId: string) => void;
@@ -84,6 +85,12 @@ export function TripProvider({ children }: PropsWithChildren) {
     updateTrip: (id, input) => setAppState((current) => ({ ...current, trips: current.trips.map((trip) => trip.trip.id === id ? { ...trip, trip: { ...trip.trip, ...input } } : trip) })),
     deleteTrip: (id) => setAppState((current) => { if (current.trips.length === 1) return current; const trips = current.trips.filter((trip) => trip.trip.id !== id); return { trips, activeTripId: current.activeTripId === id ? trips[0].trip.id : current.activeTripId }; }),
     selectTrip: (id) => setAppState((current) => ({ ...current, activeTripId: id })),
+    duplicateTrip: (id) => setAppState((current) => {
+      const source = current.trips.find((item) => item.trip.id === id); if (!source) return current;
+      const tripId = makeId('trip');
+      const copy: TripState = { ...source, trip: { ...source.trip, id: tripId, name: `${source.trip.name} 복사본` }, itinerary: source.itinerary.map((item) => ({ ...item, id: makeId('plan'), status: 'planned' })), places: source.places.map((item) => ({ ...item, id: makeId('place') })), shopping: source.shopping.map((item) => ({ ...item, id: makeId('shop'), status: 'planned', prices: item.prices.map((price) => ({ ...price, id: makeId('price') })) })), info: source.info.map((item) => ({ ...item, id: makeId('info'), complete: false })), flights: source.flights.map((item) => ({ ...item, id: makeId('flight'), notificationId: undefined })), reservations: source.reservations.map((item) => ({ ...item, id: makeId('reservation'), status: 'planned', confirmationNumber: '', notificationId: undefined })), trackSessions: [] };
+      return { activeTripId: tripId, trips: [...current.trips, copy] };
+    }),
     addPlan: (plan) => updateActive((trip) => ({ ...trip, itinerary: [...trip.itinerary, { ...plan, id: makeId('plan'), durationMinutes: 60, fixed: false, status: 'planned' }] })),
     updatePlan: (id, update) => updateActive((trip) => ({ ...trip, itinerary: trip.itinerary.map((item) => item.id === id ? { ...item, ...update } : item) })),
     deletePlan: (id) => updateActive((trip) => ({ ...trip, itinerary: trip.itinerary.filter((item) => item.id !== id) })),
