@@ -493,6 +493,9 @@
       '</p><ul class="menu-list">' + entries.map(([item, price]) => '<li><span>' + esc(item) +
       '</span><span class="menu-price">' + esc(price || '매장 확인') + '</span></li>').join('') + '</ul></section>' : '';
     const sourceLabel = isMenu(place) && !['야시장','뷔페'].includes(place.type) ? '메뉴판·사진 원문' : '상세 안내·사진';
+    const shoppingSuggestions = (place.shoppingSuggestions || []).map((item, index) =>
+      '<button type="button" class="button secondary" data-shopping-place="' + esc(id) + '" data-shopping-index="' + index + '">+ ' + esc(item.name) + '</button>').join('');
+    const shoppingSection = shoppingSuggestions ? '<section class="detail-shopping"><h3>쇼핑리스트에 담기</h3><p>이 장소에서 살 만한 항목이에요.</p><div class="detail-links">' + shoppingSuggestions + '</div></section>' : '';
     const mapUrl = isKoreanPlace(place) ? naverMap(place) : googleMap(place);
     const addressUrl = isKoreanPlace(place) ? naverSearch(mapAddress(place)) : googleMap({...place, query: mapAddress(place)});
     showPlaceDialog(heading +
@@ -503,7 +506,7 @@
       link(place.menuSource || place.source,sourceLabel) +
       (place.menuSource && place.source !== place.menuSource ? link(place.source,'장소 안내') : '') +
       link(place.booking,'예약 화면') + catalog + phone + '</div>' +
-      parkingSection(id) + picture(id, place, true) + information);
+      shoppingSection + parkingSection(id) + picture(id, place, true) + information);
   }
 
   document.addEventListener('error', event => {
@@ -516,6 +519,13 @@
     const target = event.target.closest('button');
     if (!target) return;
     const data = target.dataset;
+    if (data.shoppingPlace) {
+      const place = venues[data.shoppingPlace];
+      const item = place?.shoppingSuggestions?.[Number(data.shoppingIndex)];
+      if (item) window.dispatchEvent(new CustomEvent('mytrip:add-shopping', {detail:{...item, store:place.name, quantity:1, placeId:data.shoppingPlace}}));
+      dialog.close();
+      return;
+    }
     if (data.expandedDay && data.expandedDay !== expandedDay) {
       expandedDay = data.expandedDay;
       renderExpanded();

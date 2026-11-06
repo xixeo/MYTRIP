@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "serve -l 4173 .",
-    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check shopping.js"
+    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check shopping.js && node scripts/validate-shopping-content.js"
   },
   "devDependencies": { "serve": "^14.2.5" }
 }

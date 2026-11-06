@@ -157,17 +157,25 @@
         <h2 id="shopping-title">쇼핑리스트</h2>
       </header>
       <div class="window-body">
-        <p class="shopping-intro">여행 중 살 물건을 적어 두세요. 체크와 목록은 이 브라우저에 자동 저장돼요.</p>
+        <p class="shopping-intro">일정에 있는 가게와 체험에서 살 만한 항목을 골라 담거나 직접 추가하세요. 체크와 목록은 이 브라우저에 자동 저장돼요.</p>
+        <section class="shopping-recommendations" aria-labelledby="shopping-recommend-title">
+          <div class="shopping-section-head"><div><p class="shopping-kicker">TRIP PICKS</p><h3 id="shopping-recommend-title">이번 여행 추천</h3></div><div id="shopping-recommend-filters" class="chips" role="group" aria-label="추천 항목 분류"></div></div>
+          <div id="shopping-recommend-list" class="shopping-recommend-list"></div>
+        </section>
+        <h3 class="shopping-form-title">직접 추가</h3>
         <form id="shopping-form" class="shopping-form">
           <label><span>살 물건</span><input id="shopping-name" required maxlength="60" placeholder="예: 성심당 튀김소보로"></label>
           <label><span>구매할 곳</span><input id="shopping-store" maxlength="60" placeholder="예: 성심당 본점"></label>
+          <label><span>분류</span><select id="shopping-category"><option>먹거리</option><option>기념품</option><option>체험</option><option>생활용품</option><option>기타</option></select></label>
           <label><span>수량</span><input id="shopping-quantity" type="number" min="1" max="99" value="1" inputmode="numeric"></label>
           <label><span>예상 금액</span><input id="shopping-price" type="number" min="0" step="100" placeholder="0" inputmode="numeric"></label>
+          <label class="shopping-note-field"><span>메모</span><input id="shopping-note" maxlength="100" placeholder="보관 방법, 선물할 사람, 확인할 내용"></label>
           <button class="button primary shopping-add" type="submit">목록에 추가</button>
         </form>
         <div class="shopping-summary" aria-live="polite">
           <p><strong id="shopping-progress">0 / 0</strong><span>구매 완료</span></p>
           <p><strong id="shopping-total">0원</strong><span>예상 합계</span></p>
+          <p><strong id="shopping-remaining">0개</strong><span>남은 항목</span></p>
           <button id="shopping-clear-complete" class="button secondary" type="button" hidden>구매 완료 삭제</button>
         </div>
         <p id="shopping-empty" class="shopping-empty">아직 담은 물건이 없어요.</p>
