@@ -804,14 +804,26 @@ dialog::backdrop { background: #33213d99; }
 .detail-shopping { margin-top: 15px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--rose-light); }
 .detail-shopping h3 { margin: 0; color: var(--navy); font-size: .95rem; }
 .detail-shopping p { margin: 4px 0 0; color: var(--muted); font-size: .75rem; }
-.user-schedule, .place-manager { margin-top: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff8fc; }
+.user-schedule, .place-manager { margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .user-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .user-section-head h3 { margin: 0; color: var(--navy); font-size: 1rem; }
 .user-section-head p:not(.shopping-kicker) { margin: 3px 0 0; color: var(--muted); font-size: .76rem; }
-.user-timeline { margin-top: 10px; }
+.user-timeline { margin-top: 12px; }
 .user-schedule-stop::after { display: none; }
-.user-schedule-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7px; }
+.user-schedule-stop { margin-bottom: 4px; border: 1px solid var(--line) !important; border-radius: 9px; background: var(--card) !important; }
+.user-schedule-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; padding-top: 7px; border-top: 1px solid #ead3df; }
 .mini-action, .place-edit { padding: 0; border: 0; color: var(--purple); background: transparent; font-size: .7rem; font-weight: 800; line-height: 1.4; cursor: pointer; }
+.mini-action:disabled { opacity: .2; cursor: default; }
+.edit-action { margin-left: auto; }
+.travel-gap { grid-column: 2; margin: 1px 0 5px 13px; color: var(--muted); font-size: .66rem; }
+.travel-gap::before { content: "↓"; margin-right: 6px; color: var(--lavender); }
+.schedule-empty { display: grid; justify-items: center; gap: 5px; margin: 13px 0 0; padding: 26px 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); text-align: center; }
+.schedule-empty strong { color: var(--ink); font-size: .92rem; }
+.schedule-empty span { font-size: .74rem; }
+.schedule-empty .button { margin-top: 5px; }
+.schedule-bottom-add { width: 100%; margin-top: 10px; padding: 10px; border: 1px dashed var(--lavender); border-radius: 8px; color: var(--purple); background: transparent; font-size: .78rem; font-weight: 800; cursor: pointer; }
+.reference-schedule { margin-top: 14px; border-top: 1px solid var(--line); }
+.reference-schedule > summary { padding: 12px 2px 4px; color: var(--muted); font-size: .76rem; font-weight: 800; cursor: pointer; }
 .user-timeline .is-done { opacity: .6; }
 .user-timeline .is-done strong { text-decoration: line-through; }
 .user-timeline .is-skipped { opacity: .48; }
@@ -837,6 +849,21 @@ dialog::backdrop { background: #33213d99; }
 .editor-help { margin: 10px 0 0; color: var(--muted); font-size: .7rem; }
 .editor-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .editor-actions .danger { margin-right: auto; color: #fff; background: var(--berry); }
+.schedule-place-picker { display: grid; gap: 9px; margin-bottom: 14px; padding: 12px; border-radius: 10px; background: var(--blue-light); }
+.schedule-place-picker label { display: grid; gap: 5px; color: var(--navy); font-size: .72rem; font-weight: 800; }
+.schedule-place-picker input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: inherit; }
+.schedule-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.schedule-picker-head strong { color: var(--navy); font-size: .78rem; }
+.schedule-picker-head strong.is-error { color: var(--berry); }
+.schedule-place-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 230px; overflow-y: auto; }
+.schedule-place-option { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; text-align: left; cursor: pointer; }
+.schedule-place-option.is-selected { border: 2px solid var(--navy); background: #fff8fc; }
+.schedule-place-option > span { display: grid; min-width: 0; }
+.schedule-place-option strong { font-size: .78rem; overflow-wrap: anywhere; }
+.schedule-place-option small { margin-top: 2px; color: var(--muted); font-size: .63rem; overflow-wrap: anywhere; }
+.schedule-place-option em { flex: none; color: var(--purple); font-size: .58rem; font-style: normal; font-weight: 800; }
+.schedule-picker-empty { grid-column: 1 / -1; margin: 0; padding: 16px; color: var(--muted); font-size: .74rem; text-align: center; }
+.schedule-details { padding-top: 2px; }
 .trip-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .trip-dialog-head h2 { margin: 0; color: var(--navy); font-size: 1.35rem; }
 .trip-list { display: grid; gap: 9px; }
@@ -849,7 +876,7 @@ dialog::backdrop { background: #33213d99; }
 .trip-card-actions .button { font-size: .68rem; }
 .trip-delete { border: 0; color: var(--berry); background: transparent; font-size: .68rem; font-weight: 800; cursor: pointer; }
 .editor-error { min-height: 1.2em; margin: 8px 0 0; color: var(--berry); font-size: .75rem; font-weight: 800; }
-.custom-trip .route-strip, .custom-trip #planner, .custom-trip #expanded-panel, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
+.custom-trip .route-strip, .custom-trip #planner, .custom-trip .reference-schedule, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
 .custom-trip #user-schedule { margin-top: 12px; }
 @media (max-width: 760px) {
   .shopping-section-head { display: grid; align-items: start; }
@@ -864,4 +891,5 @@ dialog::backdrop { background: #33213d99; }
   .editor-wide { grid-column: auto; }
   .trip-list-card { display: grid; }
   .trip-card-actions { justify-content: flex-start; }
+  .schedule-place-results { grid-template-columns: 1fr; }
 }
