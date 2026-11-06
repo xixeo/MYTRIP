@@ -174,7 +174,8 @@
           <label><span>구매할 곳</span><input id="shopping-store" maxlength="60" placeholder="예: 성심당 본점"></label>
           <label><span>분류</span><select id="shopping-category"><option>먹거리</option><option>기념품</option><option>체험</option><option>생활용품</option><option>기타</option></select></label>
           <label><span>수량</span><input id="shopping-quantity" type="number" min="1" max="99" value="1" inputmode="numeric"></label>
-          <label><span>예상 금액</span><input id="shopping-price" type="number" min="0" step="100" placeholder="0" inputmode="numeric"></label>
+          <label><span>통화</span><select id="shopping-currency"><option value="KRW">KRW 원</option><option value="JPY">JPY 엔</option><option value="USD">USD 달러</option><option value="EUR">EUR 유로</option><option value="CNY">CNY 위안</option><option value="THB">THB 바트</option><option value="SGD">SGD 달러</option><option value="HKD">HKD 달러</option></select></label>
+          <label><span>개당 예상 금액</span><input id="shopping-price" type="number" min="0" step="any" placeholder="0" inputmode="decimal"></label>
           <label class="shopping-note-field"><span>메모</span><input id="shopping-note" maxlength="100" placeholder="보관 방법, 선물할 사람, 확인할 내용"></label>
           <button class="button primary shopping-add" type="submit">목록에 추가</button>
         </form>
@@ -184,6 +185,7 @@
           <p><strong id="shopping-remaining">0개</strong><span>남은 항목</span></p>
           <button id="shopping-clear-complete" class="button secondary" type="button" hidden>구매 완료 삭제</button>
         </div>
+        <div class="exchange-bar"><p id="exchange-status">해외 통화를 입력하면 최신 기준환율로 원화 금액을 계산해요.</p><button id="exchange-refresh" class="button secondary" type="button">환율 새로고침</button></div>
         <p id="shopping-empty" class="shopping-empty">아직 담은 물건이 없어요.</p>
         <ul id="shopping-list" class="shopping-list" aria-label="쇼핑 항목"></ul>
       </div>
