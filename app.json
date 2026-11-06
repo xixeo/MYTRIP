@@ -38,7 +38,8 @@
           "cameraPermission": "MYTRIP이 상품 바코드를 스캔하려면 카메라 접근이 필요합니다.",
           "barcodeScannerEnabled": true
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true

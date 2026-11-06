@@ -1,16 +1,16 @@
+import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius } from '@/theme';
 import { SavedPlace } from '@/types';
 
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
 export function MapCanvas({ places }: { places: SavedPlace[] }) {
   const mapped = places.filter((place) => place.latitude !== undefined && place.longitude !== undefined);
-  const androidNeedsKey = Platform.OS === 'android' && !process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (androidNeedsKey) return <MapNotice title="Google Maps 키가 필요합니다" text="Android 지도를 표시하려면 환경 설정에 플랫폼 제한을 적용한 API 키를 추가하세요." />;
-  return <View style={styles.container}><MapView style={StyleSheet.absoluteFill} initialRegion={{ latitude: mapped[0]?.latitude ?? 35.6812, longitude: mapped[0]?.longitude ?? 139.7671, latitudeDelta: 0.12, longitudeDelta: 0.12 }}>{mapped.map((place) => <Marker key={place.id} coordinate={{ latitude: place.latitude!, longitude: place.longitude! }} title={place.name} description={place.note || place.area} />)}</MapView>{mapped.length === 0 ? <View style={styles.overlay}><Text style={styles.overlayText}>좌표가 있는 장소를 저장하면 지도에 표시됩니다.</Text></View> : null}</View>;
+  const center: [number, number] = [mapped[0]?.longitude ?? 139.7671, mapped[0]?.latitude ?? 35.6812];
+  return <View style={styles.container}><Map style={StyleSheet.absoluteFill} mapStyle={STYLE_URL}><Camera initialViewState={{ center, zoom: mapped.length ? 10 : 8 }} />{mapped.map((place) => <Marker key={place.id} id={place.id} lngLat={[place.longitude!, place.latitude!]} anchor="bottom"><View style={styles.marker}><Text style={styles.markerText}>●</Text></View></Marker>)}</Map>{mapped.length === 0 ? <View style={styles.overlay}><Text style={styles.overlayText}>좌표가 있는 장소를 저장하면 지도에 표시됩니다.</Text></View> : null}<View style={styles.source}><Text style={styles.sourceText}>© OpenStreetMap · OpenFreeMap</Text></View></View>;
 }
 
-function MapNotice({ title, text }: { title: string; text: string }) { return <View style={styles.notice}><View style={styles.circle}><Text style={styles.icon}>⌖</Text></View><Text style={styles.title}>{title}</Text><Text style={styles.text}>{text}</Text></View>; }
-const styles = StyleSheet.create({ container: { height: 260, borderRadius: radius.large, overflow: 'hidden', borderWidth: 1, borderColor: '#C3DAD9' }, notice: { minHeight: 230, borderRadius: radius.large, backgroundColor: '#DDEBEA', alignItems: 'center', justifyContent: 'center', padding: 28, borderWidth: 1, borderColor: '#C3DAD9' }, circle: { width: 62, height: 62, borderRadius: 31, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }, icon: { color: colors.primary, fontSize: 32 }, title: { color: colors.ink, fontSize: 18, fontWeight: '900', marginTop: 16 }, text: { color: colors.muted, textAlign: 'center', lineHeight: 20, marginTop: 7 }, overlay: { position: 'absolute', left: 20, right: 20, bottom: 18, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: 12 }, overlayText: { color: colors.ink, textAlign: 'center', fontWeight: '700' } });
+const styles = StyleSheet.create({ container: { height: 260, borderRadius: radius.large, overflow: 'hidden', borderWidth: 1, borderColor: '#C3DAD9' }, marker: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.primary }, markerText: { color: colors.accent, fontSize: 15, lineHeight: 17 }, overlay: { position: 'absolute', left: 20, right: 20, bottom: 38, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 12, padding: 12 }, overlayText: { color: colors.ink, textAlign: 'center', fontWeight: '700' }, source: { position: 'absolute', right: 7, bottom: 5, backgroundColor: 'rgba(255,255,255,0.8)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 }, sourceText: { color: colors.muted, fontSize: 8 } });
