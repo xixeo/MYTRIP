@@ -38,7 +38,7 @@ type NewPlace = Pick<SavedPlace, 'name' | 'category' | 'area'>;
 type PlaceInput = Omit<SavedPlace, 'id'>;
 type NewShopping = Pick<ShoppingItem, 'name' | 'store'>;
 type FlightInput = Omit<Flight, 'id'>;
-type ShoppingInput = Pick<ShoppingItem, 'name' | 'store' | 'quantity'>;
+type ShoppingInput = Pick<ShoppingItem, 'name' | 'store' | 'quantity' | 'barcode'>;
 type PriceInput = Omit<PriceObservation, 'id'>;
 type ReservationInput = Omit<Reservation, 'id'>;
 interface TripContextValue {
