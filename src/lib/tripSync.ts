@@ -30,3 +30,18 @@ export async function downloadTrips() {
     return { ...payload, trip: { ...payload.trip, name: row.title, destination: row.destination, startDate: row.start_date, endDate: row.end_date, cloudId: row.id, cloudVersion: row.version }, trackSessions: [] };
   });
 }
+
+export async function createInvite(tripId: string, userId: string, role: 'editor' | 'viewer') {
+  if (!supabase) throw new Error('Supabase 환경 설정이 필요합니다.');
+  const expiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
+  const { data, error } = await supabase.from('trip_invites').insert({ trip_id: tripId, created_by: userId, role, expires_at: expiresAt }).select('id').single();
+  if (error) throw error;
+  return `mytrip://invite?id=${data.id}`;
+}
+
+export async function joinTrip(inviteId: string) {
+  if (!supabase) throw new Error('Supabase 환경 설정이 필요합니다.');
+  const { data, error } = await supabase.rpc('join_trip_by_invite', { invite_id: inviteId });
+  if (error) throw error;
+  return data as string;
+}
