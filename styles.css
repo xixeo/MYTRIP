@@ -75,7 +75,7 @@ p, h1, h2, h3, figure { margin: 0; }
   white-space: nowrap;
 }
 .wordmark img { flex: none; }
-.masthead nav { display: flex; gap: 5px; }
+.masthead nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .masthead nav a {
   display: grid;
   place-items: center;
@@ -89,6 +89,7 @@ p, h1, h2, h3, figure { margin: 0; }
   white-space: nowrap;
 }
 .masthead nav a:hover, .site-footer a:hover { color: var(--purple); background: var(--card); }
+.nav-trip-button { min-height: 36px; padding-inline: clamp(7px, 1.75vw, 12px); border: 1px solid var(--navy); border-radius: 6px; color: #fff; background: var(--navy); font-size: clamp(.68rem, 2.65vw, .82rem); font-weight: 800; white-space: nowrap; cursor: pointer; }
 
 .trip-layout { display: grid; gap: clamp(24px, 5.2vw, 37px); }
 .window {
@@ -836,6 +837,20 @@ dialog::backdrop { background: #33213d99; }
 .editor-help { margin: 10px 0 0; color: var(--muted); font-size: .7rem; }
 .editor-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .editor-actions .danger { margin-right: auto; color: #fff; background: var(--berry); }
+.trip-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.trip-dialog-head h2 { margin: 0; color: var(--navy); font-size: 1.35rem; }
+.trip-list { display: grid; gap: 9px; }
+.trip-list-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.trip-list-card.is-active { border: 2px solid var(--navy); background: var(--blue-light); }
+.trip-list-card h3 { margin: 0; color: var(--ink); font-size: .95rem; }
+.trip-list-card p { margin: 3px 0; color: var(--muted); font-size: .74rem; }
+.trip-list-card small { color: var(--muted); font-size: .68rem; }
+.trip-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.trip-card-actions .button { font-size: .68rem; }
+.trip-delete { border: 0; color: var(--berry); background: transparent; font-size: .68rem; font-weight: 800; cursor: pointer; }
+.editor-error { min-height: 1.2em; margin: 8px 0 0; color: var(--berry); font-size: .75rem; font-weight: 800; }
+.custom-trip .route-strip, .custom-trip #planner, .custom-trip #expanded-panel, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
+.custom-trip #user-schedule { margin-top: 12px; }
 @media (max-width: 760px) {
   .shopping-section-head { display: grid; align-items: start; }
   .shopping-recommend-list { grid-template-columns: 1fr; }
@@ -847,4 +862,6 @@ dialog::backdrop { background: #33213d99; }
   .user-section-head { align-items: start; }
   .user-place-grid, .editor-grid { grid-template-columns: 1fr; }
   .editor-wide { grid-column: auto; }
+  .trip-list-card { display: grid; }
+  .trip-card-actions { justify-content: flex-start; }
 }

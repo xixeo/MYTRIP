@@ -1,14 +1,14 @@
 (() => {
   'use strict';
-  const storageKey = 'weekend-trip-shopping-v2';
+  const storageKey = window.MYTRIP_STORAGE_KEY?.('weekend-trip-shopping-v2') || 'weekend-trip-shopping-v2';
   const legacyStorageKey = 'weekend-trip-shopping-v1';
-  const exchangeStorageKey = 'mytrip-exchange-rates-v1';
+  const exchangeStorageKey = window.MYTRIP_STORAGE_KEY?.('mytrip-exchange-rates-v1') || 'mytrip-exchange-rates-v1';
   const rateMaxAge = 6 * 60 * 60 * 1000;
   const $ = selector => document.querySelector(selector);
   const form = $('#shopping-form');
   const list = $('#shopping-list');
   if (!form || !list) return;
-  const recommendations = Object.entries(window.TRIP?.venues || {}).flatMap(([placeId, place]) =>
+  const recommendations = Object.entries(window.MYTRIP_ACTIVE_TRIP?.template ? window.TRIP?.venues || {} : {}).flatMap(([placeId, place]) =>
     (place.shoppingSuggestions || []).map((item, index) => ({...item, id:`${placeId}-${index}`, placeId, store:place.name})));
   let recommendationFilter = '전체';
   let items = [];
@@ -16,10 +16,11 @@
   let exchangeLoading = false;
   let exchangeError = '';
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey) || '[]');
+    const legacy = window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('weekend-trip-shopping-v2') || localStorage.getItem(legacyStorageKey) : null;
+    const saved = JSON.parse(localStorage.getItem(storageKey) || legacy || '[]');
     if (Array.isArray(saved)) items = saved.map(item => ({category:'기타', note:'', currency:'KRW', ...item}));
   } catch (_) { items = []; }
-  try { exchangeRates = JSON.parse(localStorage.getItem(exchangeStorageKey) || '{}'); } catch (_) { exchangeRates = {}; }
+  try { exchangeRates = JSON.parse(localStorage.getItem(exchangeStorageKey) || (window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('mytrip-exchange-rates-v1') : null) || '{}'); } catch (_) { exchangeRates = {}; }
   const won = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
   const money = (value, currency = 'KRW') => new Intl.NumberFormat('ko-KR', {style:'currency', currency, maximumFractionDigits:['KRW','JPY'].includes(currency) ? 0 : 2}).format(Number(value || 0));
   const save = () => localStorage.setItem(storageKey, JSON.stringify(items));
@@ -63,6 +64,7 @@
     $('#exchange-status').textContent = `${details.join(' · ')}${exchangeError ? ` · ${exchangeError}` : ''}`;
   }
   function renderRecommendations() {
+    document.querySelector('.shopping-recommendations').hidden = recommendations.length === 0;
     const categories = ['전체', ...new Set(recommendations.map(item => item.category))];
     $('#shopping-recommend-filters').replaceChildren(...categories.map(category => {
       const button = make('button', 'chip', category); button.type = 'button'; button.setAttribute('aria-pressed', String(category === recommendationFilter));

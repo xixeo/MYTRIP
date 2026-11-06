@@ -1,15 +1,17 @@
 (() => {
   'use strict';
-  const storageKey = 'mytrip-user-planner-v1';
+  const storageKey = window.MYTRIP_STORAGE_KEY?.('mytrip-user-planner-v1') || 'mytrip-user-planner-v1';
   const $ = selector => document.querySelector(selector);
-  const builtInPlaces = window.TRIP?.venues || {};
-  const dayLabels = {fri:'11월 6일 금요일', sat:'11월 7일 토요일', sun:'11월 8일 일요일'};
-  let activeDay = 'fri';
+  const builtInPlaces = window.MYTRIP_ACTIVE_TRIP?.template ? window.TRIP?.venues || {} : {};
+  const tripDays = window.MYTRIP_TRIP_DAYS || [{value:'fri', label:'11월 6일 금요일'}];
+  const dayLabels = Object.fromEntries(tripDays.map(day => [day.value, day.label]));
+  let activeDay = tripDays[0].value;
   let editingPlaceId = null;
   let editingScheduleId = null;
   let state = {places:[], schedule:[]};
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    const legacy = window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('mytrip-user-planner-v1') : null;
+    const saved = JSON.parse(localStorage.getItem(storageKey) || legacy || 'null');
     if (saved?.places && saved?.schedule) state = saved;
   } catch (_) { state = {places:[], schedule:[]}; }
 
@@ -93,13 +95,13 @@
   function openPlaceEditor(placeId = null) {
     editingPlaceId = placeId; const place = state.places.find(item => item.id === placeId);
     $('#place-editor-title').textContent = place ? '장소 편집' : '새 장소 등록'; $('#place-delete').hidden = !place;
-    setValue('#place-name', place?.name); setValue('#place-type', place?.type || '관광'); setValue('#place-country', place?.country); setValue('#place-address', place?.address); setValue('#place-local-name', place?.localName); setValue('#place-phone', place?.phone); setValue('#place-website', place?.website); setValue('#place-lat', place?.lat); setValue('#place-lon', place?.lon); setValue('#place-checked-at', place?.checkedAt); setValue('#place-note', place?.note);
+    setValue('#place-name', place?.name); setValue('#place-type', place?.type || '관광'); setValue('#place-country', place?.country || window.MYTRIP_ACTIVE_TRIP?.country); setValue('#place-address', place?.address); setValue('#place-local-name', place?.localName); setValue('#place-phone', place?.phone); setValue('#place-website', place?.website); setValue('#place-lat', place?.lat); setValue('#place-lon', place?.lon); setValue('#place-checked-at', place?.checkedAt); setValue('#place-note', place?.note);
     placeDialog.showModal(); setTimeout(() => $('#place-name').focus(), 0);
   }
   function openScheduleEditor(scheduleId = null, placeId = null) {
     editingScheduleId = scheduleId; const item = state.schedule.find(candidate => candidate.id === scheduleId);
     $('#schedule-editor-title').textContent = item ? '일정 수정' : '일정에 장소 추가'; $('#schedule-delete').hidden = !item;
-    renderPlaceOptions(item?.placeId || placeId); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note);
+    renderPlaceOptions(item?.placeId || placeId); const daySelect = $('#schedule-day'); daySelect.replaceChildren(...tripDays.map(day => { const option = document.createElement('option'); option.value = day.value; option.textContent = day.label; return option; })); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note);
     scheduleDialog.showModal();
   }
   function setScheduleStatus(scheduleId, status) { const item = state.schedule.find(candidate => candidate.id === scheduleId); if (item) item.status = status; save(); renderSchedule(); }
@@ -133,6 +135,6 @@
     }
     openPlaceEditor(place.id);
   });
-  document.addEventListener('click', event => { const day = event.target.closest('[data-expanded-day]')?.dataset.expandedDay; if (day) { activeDay = day; renderSchedule(); } });
+  document.addEventListener('click', event => { const target = event.target.closest('[data-expanded-day], [data-user-day]'); const day = target?.dataset.expandedDay || target?.dataset.userDay; if (day) { activeDay = day; if (target.dataset.userDay) { document.querySelectorAll('[data-user-day]').forEach(button => button.setAttribute('aria-pressed', String(button === target))); } renderSchedule(); } });
   renderPlaces(); renderSchedule();
 })();
