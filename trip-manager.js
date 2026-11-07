@@ -50,7 +50,7 @@
     document.querySelector('#hero-date').textContent = formatRange(activeTrip);
     document.querySelector('.footer-title').textContent = `${activeTrip.startDate}–${activeTrip.endDate} / ${activeTrip.title}`;
     if (!activeTrip.template) {
-      const cta = document.querySelector('.hero-cta'); cta.href = '#places'; cta.firstChild.textContent = '장소 등록하기 ';
+      const cta = document.querySelector('.hero-cta'); cta.href = '#expanded-plan'; cta.firstChild.textContent = '일정 만들기 ';
       document.querySelector('#expanded-title').textContent = `${activeTrip.title} 일정`;
       document.querySelector('#places-title').textContent = `${activeTrip.title} 장소`;
       const tabs = document.querySelector('#expanded-tabs');

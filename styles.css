@@ -876,7 +876,8 @@ dialog::backdrop { background: #33213d99; }
 .trip-card-actions .button { font-size: .68rem; }
 .trip-delete { border: 0; color: var(--berry); background: transparent; font-size: .68rem; font-weight: 800; cursor: pointer; }
 .editor-error { min-height: 1.2em; margin: 8px 0 0; color: var(--berry); font-size: .75rem; font-weight: 800; }
-.custom-trip .route-strip, .custom-trip #planner, .custom-trip .reference-schedule, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
+#planner { display: none; }
+.custom-trip .route-strip, .custom-trip .reference-schedule, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
 .custom-trip #user-schedule { margin-top: 12px; }
 @media (max-width: 760px) {
   .shopping-section-head { display: grid; align-items: start; }
