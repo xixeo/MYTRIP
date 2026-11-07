@@ -100,7 +100,7 @@
       const row = document.createElement('li'); if (item.status !== 'planned') row.className = `is-${item.status}`;
       const time = document.createElement('span'); time.className = 'time'; time.textContent = item.time;
       const body = document.createElement('div'); body.className = 'stop user-schedule-stop';
-      const titleRow=document.createElement('div'); titleRow.className='schedule-title-row'; const title = document.createElement('strong'); title.textContent = place.name; const primaryMap=mapLinks(place)[0]; const map=document.createElement('a'); map.className='schedule-map-link'; map.textContent=`${primaryMap.label} ↗`; map.href=primaryMap.href; map.target='_blank'; map.rel='noreferrer'; titleRow.append(title,map);
+      const titleRow=document.createElement('div'); titleRow.className='schedule-title-row'; const title = document.createElement('strong'); title.textContent = place.name; const primaryMap=mapLinks(place)[0]; const map=document.createElement('a'); map.className='schedule-map-link'; map.textContent=`${primaryMap.label} ↗`; map.href=primaryMap.href; map.target='_top'; map.rel='noreferrer'; titleRow.append(title,map);
       const meta = document.createElement('span'); meta.className = 'stop-area'; meta.textContent = `${place.area || place.address || '주소 미확인'} · ${item.duration}분${item.fixed ? ' · 고정' : ''}`;
       const note = document.createElement('span'); note.className = 'stop-note'; note.textContent = item.note || '';
       const actions = document.createElement('div'); actions.className = 'user-schedule-actions';

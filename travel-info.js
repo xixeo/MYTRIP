@@ -24,7 +24,7 @@
       copy.append(title, make('span', '', meta || '날짜·예약번호 미입력'));
       if (item.note) copy.append(make('small', '', item.note));
       const actions = make('div', 'info-actions');
-      if (item.link) { const link = make('a', 'button secondary', '예약 열기 ↗'); link.href = item.link; link.target = '_blank'; link.rel = 'noreferrer'; actions.append(link); }
+      if (item.link) { const link = make('a', 'button secondary', '예약 열기 ↗'); link.href = item.link; link.target = '_top'; link.rel = 'noreferrer'; actions.append(link); }
       actions.append(button('삭제', 'shopping-remove', () => { if (!confirm(`“${item.name}” 예약을 삭제할까요?`)) return; state.reservations = state.reservations.filter(candidate => candidate.id !== item.id); save(); renderReservations(); }, `${item.name} 삭제`));
       row.append(copy, actions); return row;
     }));
