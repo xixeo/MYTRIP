@@ -5,7 +5,8 @@ const script = fs.readFileSync('travel-info.js', 'utf8');
 const requiredIds = [
   'travel-info', 'reservation-form', 'reservation-name', 'reservation-date',
   'reservation-status', 'reservation-list', 'checklist-form', 'checklist-name',
-  'checklist-assignee', 'checklist-list', 'trip-export', 'trip-import', 'trip-import-file'
+  'checklist-assignee', 'checklist-list', 'trip-export', 'trip-import', 'trip-import-file',
+  'cloud-login-form', 'cloud-email', 'cloud-upload', 'cloud-refresh', 'cloud-trip-list'
 ];
 for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) throw new Error(`여행 준비·백업 요소 누락: #${id}`);

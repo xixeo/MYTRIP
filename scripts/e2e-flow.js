@@ -4,12 +4,17 @@ const {chromium} = require('playwright-core');
   const browser = await chromium.launch({headless:true, executablePath:'/usr/bin/chromium', args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-networking']});
   const page = await browser.newPage({viewport:{width:390,height:844}});
   page.setDefaultTimeout(8000);
+  let cloudSaved = null;
   page.on('pageerror', error => console.error('PAGE ERROR', error));
   await page.route(/api\.frankfurter\.dev\/v1\/latest/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({amount:1, base:'JPY', date:'2026-11-06', rates:{KRW:8.4863}})}));
+  await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/rest\/v1\/mytrip_snapshots/, async route => {
+    if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); return route.fulfill({status:201, contentType:'application/json', body:''}); }
+    return route.fulfill({status:200, contentType:'application/json', body:'[]'});
+  });
   const step = name => console.log(`STEP ${name}`);
   step('open');
   await page.goto('http://127.0.0.1:4173/', {waitUntil:'domcontentloaded'});
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('mytrip-supabase-session-v1', JSON.stringify({access_token:'test-token', refresh_token:'test-refresh', expires_at:Math.floor(Date.now() / 1000) + 3600, user:{id:'00000000-0000-0000-0000-000000000001'}})); });
   await page.reload({waitUntil:'domcontentloaded'});
 
   step('create trip');
@@ -79,10 +84,13 @@ const {chromium} = require('playwright-core');
   const download = await downloadPromise;
   const backup = JSON.parse(await require('fs').promises.readFile(await download.path(), 'utf8'));
   if (backup.format !== 'MYTRIP_BACKUP' || backup.data['mytrip-travel-info-v1'].reservations[0].number !== 'TEST-1234') throw new Error('백업에 예약 정보가 없습니다.');
+  await page.click('#cloud-upload');
+  await page.waitForFunction(() => document.querySelector('#cloud-status')?.textContent.includes('완료'));
+  if (cloudSaved?.title !== '도쿄 테스트 여행' || cloudSaved?.payload?.data?.['mytrip-travel-info-v1']?.reservations?.[0]?.number !== 'TEST-1234') throw new Error('클라우드 저장 데이터가 올바르지 않습니다.');
   await page.click('#trip-list-close');
 
   await page.screenshot({path:'/tmp/mytrip-flow-mobile.png', fullPage:true});
   step('done');
-  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), reservation:await page.textContent('#reservation-list'), checklist:await page.textContent('#checklist-progress'), backup:backup.format, screenshot:'/tmp/mytrip-flow-mobile.png'}));
+  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), reservation:await page.textContent('#reservation-list'), checklist:await page.textContent('#checklist-progress'), backup:backup.format, cloud:cloudSaved?.title, screenshot:'/tmp/mytrip-flow-mobile.png'}));
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });

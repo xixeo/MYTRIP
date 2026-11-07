@@ -42,3 +42,5 @@ npm start
 ## Supabase 준비
 
 클라우드 동기화를 연결할 때는 Supabase Dashboard의 **SQL Editor**에서 [`supabase/schema.sql`](./supabase/schema.sql)을 한 번 실행합니다. 이 스키마는 로그인한 사용자가 자신의 여행 스냅샷만 읽고 수정하도록 RLS를 적용합니다. 브라우저에는 publishable key만 사용하며 Secret 또는 `service_role` 키를 넣지 않습니다.
+
+**여행 목록 → 기기 간 동기화**에서 이메일 로그인 링크를 받아 현재 여행을 저장하거나 다른 기기의 저장본을 불러옵니다. Supabase Authentication의 URL Configuration에는 실제 배포 주소를 Redirect URLs로 등록해야 로그인 링크가 앱으로 돌아옵니다.

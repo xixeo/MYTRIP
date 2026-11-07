@@ -17,6 +17,7 @@
   <script src="./menus.js" defer></script>
   <script src="./expanded.js?v=trip-maps" defer></script>
   <script src="./trip-manager.js" defer></script>
+  <script src="./cloud-sync.js" defer></script>
   <script src="./app.js?v=parking" defer></script>
   <script src="./shopping.js" defer></script>
   <script src="./travel-info.js" defer></script>
@@ -242,6 +243,13 @@
       <button class="dialog-close" id="trip-list-close" type="button" aria-label="여행 목록 닫기">×</button>
       <div class="trip-dialog-head"><div><p class="shopping-kicker">MY TRIPS</p><h2 id="trip-list-title">여행 목록</h2></div><button id="trip-create" class="button primary" type="button">+ 새 여행</button></div>
       <div class="trip-transfer"><button id="trip-export" class="button secondary" type="button">현재 여행 내보내기</button><button id="trip-import" class="button secondary" type="button">여행 가져오기</button><input id="trip-import-file" type="file" accept="application/json,.json" hidden><p id="trip-transfer-status" role="status"></p></div>
+      <section class="cloud-sync" aria-labelledby="cloud-sync-title">
+        <div class="cloud-sync-head"><div><p class="shopping-kicker">CLOUD SYNC</p><h3 id="cloud-sync-title">기기 간 동기화</h3></div><button id="cloud-sign-out" class="button secondary" type="button" hidden>로그아웃</button></div>
+        <form id="cloud-login-form" class="cloud-login-form"><label><span>이메일</span><input id="cloud-email" type="email" required autocomplete="email" placeholder="name@example.com"></label><button class="button primary" type="submit">로그인 링크 받기</button></form>
+        <div id="cloud-actions" class="cloud-actions" hidden><button id="cloud-upload" class="button primary" type="button">현재 여행 저장</button><button id="cloud-refresh" class="button secondary" type="button">클라우드 목록 새로고침</button></div>
+        <p id="cloud-status" class="cloud-status" role="status">이메일 로그인 후 여행을 여러 기기에서 불러올 수 있어요.</p>
+        <div id="cloud-trip-list" class="cloud-trip-list"></div>
+      </section>
       <div id="trip-list" class="trip-list"></div>
     </div>
   </dialog>
