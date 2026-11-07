@@ -16,7 +16,7 @@ const {chromium} = require('playwright-core');
       const ids = [...document.querySelectorAll('[id]')].map(el => el.id); const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
       const controls = [...document.querySelectorAll('input:not([type="hidden"]):not([hidden]), select:not([hidden]), textarea:not([hidden])')];
       const unlabeled = controls.filter(control => !control.labels?.length && !control.getAttribute('aria-label') && !control.getAttribute('aria-labelledby')).map(control => control.id || control.outerHTML.slice(0, 80));
-      const unnamedActions = [...document.querySelectorAll('button, a[href]')].filter(el => !el.textContent.trim() && !el.getAttribute('aria-label') && !el.querySelector('img[alt]')).map(el => el.id || el.outerHTML.slice(0, 80));
+      const unnamedActions = [...document.querySelectorAll('button, a[href]')].filter(el => el.getClientRects().length && !el.textContent.trim() && !el.getAttribute('aria-label') && !el.querySelector('img[alt]')).map(el => el.id || el.outerHTML.slice(0, 80));
       const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
       const overflowElements = overflow > 1 ? [...document.querySelectorAll('body *')].filter(el => { const box = el.getBoundingClientRect(); return box.right > document.documentElement.clientWidth + 1 || box.left < -1; }).slice(0, 10).map(el => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.className && typeof el.className === 'string' ? `.${el.className.trim().replace(/\s+/g, '.')}` : ''}`) : [];
       return {duplicateIds, unlabeled, unnamedActions, h1:document.querySelectorAll('h1').length, overflow, overflowElements};

@@ -7,6 +7,18 @@
     const saved = JSON.parse(localStorage.getItem(registryKey) || 'null');
     if (saved?.trips?.length) registry = saved;
   } catch (_) { registry = {activeId:defaultTrip.id, trips:[defaultTrip]}; }
+  const seedMarker = 'mytrip-seeded-hokkaido-2026-v1';
+  if (!localStorage.getItem(seedMarker) && Array.isArray(window.MYTRIP_SEEDED_TRIPS)) {
+    for (const seed of window.MYTRIP_SEEDED_TRIPS) {
+      if (!seed?.trip?.id || !seed.data) continue;
+      if (!registry.trips.some(trip => trip.id === seed.trip.id)) registry.trips.push(seed.trip);
+      for (const [base, value] of Object.entries(seed.data)) {
+        const key = `${base}:${seed.trip.id}`; if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(value));
+      }
+      registry.activeId = seed.trip.id;
+    }
+    localStorage.setItem(registryKey, JSON.stringify(registry)); localStorage.setItem(seedMarker, '1');
+  }
   if (!registry.trips.some(trip => trip.id === registry.activeId)) registry.activeId = registry.trips[0].id;
   const activeTrip = registry.trips.find(trip => trip.id === registry.activeId);
   const storageKey = (base, tripId = registry.activeId) => `${base}:${tripId}`;

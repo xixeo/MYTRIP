@@ -21,6 +21,19 @@ const {chromium} = require('playwright-core');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('mytrip-supabase-session-v1', JSON.stringify({access_token:'test-token', refresh_token:'test-refresh', expires_at:Math.floor(Date.now() / 1000) + 3600, user:{id:'00000000-0000-0000-0000-000000000001'}})); });
   await page.reload({waitUntil:'domcontentloaded'});
 
+  step('seeded Hokkaido sheet trip');
+  await page.waitForFunction(() => document.querySelector('#hero-trip-title')?.textContent === '홋카이도 3박 4일 여행');
+  const seeded = await page.evaluate(() => ({
+    tabs:document.querySelectorAll('[data-user-day]').length,
+    schedule:document.querySelectorAll('#user-schedule-list > li').length,
+    shoppingVisible:document.querySelectorAll('#shopping-list > li').length,
+    shoppingTotal:document.querySelector('#shopping-progress')?.textContent,
+    reservations:document.querySelectorAll('#reservation-list > li').length,
+    checklist:document.querySelectorAll('#checklist-list > li').length,
+    currency:document.querySelector('#shopping-currency')?.value
+  }));
+  if (seeded.tabs !== 4 || seeded.schedule !== 10 || seeded.shoppingVisible !== 12 || !seeded.shoppingTotal.includes('/ 52') || seeded.reservations !== 5 || seeded.checklist !== 7 || seeded.currency !== 'JPY') throw new Error(`홋카이도 시트 화면 반영 오류: ${JSON.stringify(seeded)}`);
+
   step('create trip');
   await page.click('#trip-list-open');
   await page.click('#trip-create');

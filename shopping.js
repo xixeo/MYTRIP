@@ -4,6 +4,7 @@
   const legacyStorageKey = 'weekend-trip-shopping-v1';
   const exchangeStorageKey = window.MYTRIP_STORAGE_KEY?.('mytrip-exchange-rates-v1') || 'mytrip-exchange-rates-v1';
   const rateMaxAge = 6 * 60 * 60 * 1000;
+  const defaultCurrency = /일본|japan/i.test(window.MYTRIP_ACTIVE_TRIP?.country || '') ? 'JPY' : 'KRW';
   const $ = selector => document.querySelector(selector);
   const form = $('#shopping-form');
   const list = $('#shopping-list');
@@ -15,6 +16,7 @@
   let exchangeRates = {};
   let exchangeLoading = false;
   let exchangeError = '';
+  let listLimit = 12;
   try {
     const legacy = window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('weekend-trip-shopping-v2') || localStorage.getItem(legacyStorageKey) : null;
     const saved = JSON.parse(localStorage.getItem(storageKey) || legacy || '[]');
@@ -83,7 +85,9 @@
   }
   function render(skipRateRequest = false) {
     list.replaceChildren();
-    items.forEach(item => {
+    const query = ($('#shopping-list-search')?.value || '').trim().toLowerCase(); const statusFilter = $('#shopping-list-status')?.value || 'all';
+    const visibleItems = items.filter(item => (!query || `${item.name} ${item.store} ${item.note}`.toLowerCase().includes(query)) && (statusFilter === 'all' || (statusFilter === 'done') === Boolean(item.done)));
+    visibleItems.slice(0, listLimit).forEach(item => {
       const row = make('li', `shopping-item${item.done ? ' is-done' : ''}`);
       const check = make('button', 'shopping-check', item.done ? '✓' : ''); check.type = 'button'; check.setAttribute('aria-label', `${item.name} ${item.done ? '구매 취소' : '구매 완료'}`);
       check.addEventListener('click', () => { item.done = !item.done; save(); render(); });
@@ -101,15 +105,21 @@
     $('#shopping-total').textContent = `${pending ? '약 ' : ''}${won(Math.round(knownTotal))}${pending ? ' +' : ''}`;
     $('#shopping-remaining').textContent = `${items.length - done}개`;
     $('#shopping-empty').hidden = items.length > 0; $('#shopping-clear-complete').hidden = done === 0;
+    $('#shopping-list-tools').hidden = items.length === 0;
+    $('#shopping-list-more').hidden = visibleItems.length <= listLimit; $('#shopping-list-more').textContent = `더 보기 (${visibleItems.length - listLimit}개)`;
     renderRecommendations(); renderExchangeStatus(); if (!skipRateRequest) requestRates();
   }
   form.addEventListener('submit', event => {
     event.preventDefault(); const name = $('#shopping-name').value.trim(); if (!name) return;
     addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), note:$('#shopping-note').value.trim(), done:false});
-    form.reset(); $('#shopping-quantity').value = '1'; $('#shopping-name').focus();
+    form.reset(); $('#shopping-quantity').value = '1'; $('#shopping-currency').value = defaultCurrency; $('#shopping-name').focus();
   });
   $('#shopping-clear-complete').addEventListener('click', () => { items = items.filter(item => !item.done); save(); render(); });
+  $('#shopping-list-search').addEventListener('input', () => { listLimit = 12; render(true); });
+  $('#shopping-list-status').addEventListener('change', () => { listLimit = 12; render(true); });
+  $('#shopping-list-more').addEventListener('click', () => { listLimit += 12; render(true); });
   $('#exchange-refresh').addEventListener('click', () => requestRates(true));
   window.addEventListener('mytrip:add-shopping', event => { if (event.detail) { addItem(event.detail); document.querySelector('#shopping')?.scrollIntoView({behavior:'smooth'}); } });
+  $('#shopping-currency').value = defaultCurrency;
   render();
 })();

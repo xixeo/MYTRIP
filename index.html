@@ -16,6 +16,7 @@
   <script src="./parking.js?v=parking" defer></script>
   <script src="./menus.js" defer></script>
   <script src="./expanded.js?v=trip-maps" defer></script>
+  <script src="./imported-hokkaido.js?v=sheet-20261107" defer></script>
   <script src="./trip-manager.js" defer></script>
   <script src="./cloud-sync.js" defer></script>
   <script src="./app.js?v=parking" defer></script>
@@ -120,8 +121,10 @@
           <button id="shopping-clear-complete" class="button secondary" type="button" hidden>구매 완료 삭제</button>
         </div>
         <div class="exchange-bar"><p id="exchange-status">해외 통화를 입력하면 최신 기준환율로 원화 금액을 계산해요.</p><button id="exchange-refresh" class="button secondary" type="button">환율 새로고침</button></div>
+        <div id="shopping-list-tools" class="shopping-list-tools" hidden><label><span>목록 검색</span><input id="shopping-list-search" type="search" placeholder="상품이나 매장 검색"></label><label><span>상태</span><select id="shopping-list-status"><option value="all">전체</option><option value="todo">구매 예정</option><option value="done">구매 완료</option></select></label></div>
         <p id="shopping-empty" class="shopping-empty">아직 담은 물건이 없어요.</p>
         <ul id="shopping-list" class="shopping-list" aria-label="쇼핑 항목"></ul>
+        <button id="shopping-list-more" class="button secondary shopping-list-more" type="button" hidden>더 보기</button>
       </div>
     </section>
 
