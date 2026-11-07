@@ -10,6 +10,7 @@ const {chromium} = require('playwright-core');
   const cloudSavePromise = new Promise(resolve => { resolveCloudSave = resolve; });
   page.on('pageerror', error => console.error('PAGE ERROR', error));
   await page.route(/api\.frankfurter\.dev\/v1\/latest/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({amount:1, base:'JPY', date:'2026-11-06', rates:{KRW:8.4863}})}));
+  await page.route('https://example.com/product.png', route => route.fulfill({status:200, contentType:'image/svg+xml', body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#a8c6f5"/><text x="40" y="45" text-anchor="middle">A</text></svg>'}));
   await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/rest\/v1\/mytrip_snapshots/, async route => {
     if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); resolveCloudSave(); return route.fulfill({status:201, contentType:'application/json', body:''}); }
     return route.fulfill({status:200, contentType:'application/json', body:'[]'});
@@ -30,9 +31,16 @@ const {chromium} = require('playwright-core');
     shoppingTotal:document.querySelector('#shopping-progress')?.textContent,
     reservations:document.querySelectorAll('#reservation-list > li').length,
     checklist:document.querySelectorAll('#checklist-list > li').length,
+    alternatives:document.querySelectorAll('#alternative-list > article').length,
     currency:document.querySelector('#shopping-currency')?.value
   }));
-  if (seeded.tabs !== 4 || seeded.schedule !== 10 || seeded.shoppingVisible !== 12 || !seeded.shoppingTotal.includes('/ 52') || seeded.reservations !== 5 || seeded.checklist !== 7 || seeded.currency !== 'JPY') throw new Error(`홋카이도 시트 화면 반영 오류: ${JSON.stringify(seeded)}`);
+  if (seeded.tabs !== 4 || seeded.schedule !== 10 || seeded.shoppingVisible !== 12 || !seeded.shoppingTotal.includes('/ 52') || seeded.reservations !== 5 || seeded.checklist !== 4 || seeded.alternatives !== 6 || seeded.currency !== 'JPY') throw new Error(`홋카이도 시트 화면 반영 오류: ${JSON.stringify(seeded)}`);
+  const alternativeLinks = await page.evaluate(() => JSON.parse(localStorage.getItem('mytrip-alternatives-v1:hokkaido-2026-11') || '[]').filter(item => item.placeId).length);
+  if (alternativeLinks !== 6) throw new Error(`대안 장소 일정 연결 누락: ${alternativeLinks}/6`);
+  await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('JP¥9,980') && document.querySelector('#shopping-list')?.textContent.includes('한국 가격'));
+  await page.click('#alternative-list .button');
+  await page.waitForFunction(() => document.querySelector('#schedule-selected-place')?.textContent.includes('타키나미'));
+  await page.click('[data-close-schedule-editor]');
 
   step('create trip');
   await page.click('#trip-list-open');
@@ -77,9 +85,11 @@ const {chromium} = require('playwright-core');
   await page.fill('#shopping-name', '물건 A');
   await page.selectOption('#shopping-currency', 'JPY');
   await page.fill('#shopping-price', '400');
+  await page.fill('#shopping-image', 'https://example.com/product.png');
   await page.click('#shopping-form button[type="submit"]');
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('JP¥400'));
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('현재 기준 약'), null, {timeout:15000});
+  await page.waitForFunction(() => document.querySelector('#shopping-list img')?.complete);
 
   step('reservation and checklist');
   await page.fill('#reservation-name', '도쿄역 호텔');

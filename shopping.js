@@ -17,10 +17,11 @@
   let exchangeLoading = false;
   let exchangeError = '';
   let listLimit = 12;
+  let editingItemId = null;
   try {
     const legacy = window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('weekend-trip-shopping-v2') || localStorage.getItem(legacyStorageKey) : null;
     const saved = JSON.parse(localStorage.getItem(storageKey) || legacy || '[]');
-    if (Array.isArray(saved)) items = saved.map(item => ({category:'기타', note:'', currency:'KRW', ...item}));
+    if (Array.isArray(saved)) items = saved.map(item => ({category:'기타', note:'', currency:'KRW', imageUrl:'', ...item}));
   } catch (_) { items = []; }
   try { exchangeRates = JSON.parse(localStorage.getItem(exchangeStorageKey) || (window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('mytrip-exchange-rates-v1') : null) || '{}'); } catch (_) { exchangeRates = {}; }
   const won = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
@@ -28,6 +29,7 @@
   const save = () => localStorage.setItem(storageKey, JSON.stringify(items));
   const saveRates = () => localStorage.setItem(exchangeStorageKey, JSON.stringify(exchangeRates));
   const make = (tag, className, text) => { const element = document.createElement(tag); if (className) element.className = className; if (text !== undefined) element.textContent = text; return element; };
+  const imageFallback = item => { const fallback=make('span','shopping-thumb-placeholder',item.category === '먹거리' ? '🍴' : item.category === '생활용품' ? '🧴' : '🛍'); fallback.setAttribute('role','img'); fallback.setAttribute('aria-label','상품 사진 미등록'); return fallback; };
   const sameItem = candidate => items.some(item => !item.done && item.name === candidate.name && item.store === candidate.store);
   function addItem(input) {
     const existing = items.find(item => !item.done && item.name === input.name && item.store === input.store);
@@ -89,15 +91,20 @@
     const visibleItems = items.filter(item => (!query || `${item.name} ${item.store} ${item.note}`.toLowerCase().includes(query)) && (statusFilter === 'all' || (statusFilter === 'done') === Boolean(item.done)));
     visibleItems.slice(0, listLimit).forEach(item => {
       const row = make('li', `shopping-item${item.done ? ' is-done' : ''}`);
+      const thumb=make('div','shopping-thumb');
+      if (item.imageUrl) { const img=document.createElement('img'); img.src=item.imageUrl; img.alt=`${item.name} 상품 사진`; img.loading='lazy'; img.addEventListener('error',()=>img.replaceWith(imageFallback(item))); thumb.append(img); } else thumb.append(imageFallback(item));
       const check = make('button', 'shopping-check', item.done ? '✓' : ''); check.type = 'button'; check.setAttribute('aria-label', `${item.name} ${item.done ? '구매 취소' : '구매 완료'}`);
       check.addEventListener('click', () => { item.done = !item.done; save(); render(); });
       const copy = make('div', 'shopping-copy'); const title = make('div', 'shopping-item-title'); title.append(make('span', 'shopping-category', item.category || '기타'), make('strong', '', item.name)); copy.append(title);
       const currency = item.currency || 'KRW'; const subtotal = (Number(item.price) || 0) * item.quantity; const converted = convertedWon(item);
-      copy.append(make('span', '', [item.store, `${item.quantity}개`, item.price ? money(subtotal, currency) : '가격 확인'].filter(Boolean).join(' · ')));
-      if (currency !== 'KRW' && item.price) copy.append(make('small', 'shopping-conversion', converted === null ? '원화 환산 중…' : `현재 기준 약 ${won(Math.round(converted))}`));
+      copy.append(make('span', '', [item.store, `${item.quantity}개`].filter(Boolean).join(' · ')));
+      copy.append(make('small','shopping-local-price',item.price ? `현지 가격 · ${money(subtotal,currency)}` : '현지 가격 · 미입력'));
+      if (currency !== 'KRW' && item.price) copy.append(make('small', 'shopping-conversion', converted === null ? '한국 가격 · 환산 중…' : `한국 가격 · 현재 기준 약 ${won(Math.round(converted))}`));
+      else if (currency === 'KRW' && item.price) copy.append(make('small','shopping-conversion',`한국 가격 · ${won(subtotal)}`));
       if (item.note) copy.append(make('small', '', item.note));
+      const edit = make('button','shopping-edit','수정'); edit.type='button'; edit.addEventListener('click',()=>openEditor(item.id));
       const remove = make('button', 'shopping-remove', '삭제'); remove.type = 'button'; remove.addEventListener('click', () => { items = items.filter(candidate => candidate.id !== item.id); save(); render(); });
-      row.append(check, copy, remove); list.append(row);
+      const actions=make('div','shopping-item-actions'); actions.append(edit,remove); row.append(thumb,check,copy,actions); list.append(row);
     });
     const done = items.filter(item => item.done).length;
     $('#shopping-progress').textContent = `${done} / ${items.length}`;
@@ -111,13 +118,17 @@
   }
   form.addEventListener('submit', event => {
     event.preventDefault(); const name = $('#shopping-name').value.trim(); if (!name) return;
-    addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), note:$('#shopping-note').value.trim(), done:false});
+    addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), imageUrl:$('#shopping-image').value.trim(), note:$('#shopping-note').value.trim(), done:false});
     form.reset(); $('#shopping-quantity').value = '1'; $('#shopping-currency').value = defaultCurrency; $('#shopping-name').focus();
   });
   $('#shopping-clear-complete').addEventListener('click', () => { items = items.filter(item => !item.done); save(); render(); });
   $('#shopping-list-search').addEventListener('input', () => { listLimit = 12; render(true); });
   $('#shopping-list-status').addEventListener('change', () => { listLimit = 12; render(true); });
   $('#shopping-list-more').addEventListener('click', () => { listLimit += 12; render(true); });
+  const editorDialog=$('#shopping-editor-dialog');
+  function openEditor(itemId) { const item=items.find(candidate=>candidate.id===itemId); if(!item)return; editingItemId=itemId; $('#shopping-edit-name').value=item.name; $('#shopping-edit-store').value=item.store || ''; $('#shopping-edit-category').value=item.category || '기타'; $('#shopping-edit-currency').value=item.currency || defaultCurrency; $('#shopping-edit-quantity').value=String(item.quantity || 1); $('#shopping-edit-price').value=String(item.price || 0); $('#shopping-edit-image').value=item.imageUrl || ''; $('#shopping-edit-note').value=item.note || ''; editorDialog.showModal(); }
+  $('#shopping-editor-form').addEventListener('submit',event=>{ event.preventDefault(); const item=items.find(candidate=>candidate.id===editingItemId); if(!item)return; Object.assign(item,{name:$('#shopping-edit-name').value.trim(),store:$('#shopping-edit-store').value.trim(),category:$('#shopping-edit-category').value,currency:$('#shopping-edit-currency').value,quantity:Math.max(1,Number($('#shopping-edit-quantity').value)||1),price:Math.max(0,Number($('#shopping-edit-price').value)||0),imageUrl:$('#shopping-edit-image').value.trim(),note:$('#shopping-edit-note').value.trim()}); save(); editorDialog.close(); render(); });
+  document.querySelectorAll('[data-close-shopping-editor]').forEach(button=>button.addEventListener('click',()=>editorDialog.close()));
   $('#exchange-refresh').addEventListener('click', () => requestRates(true));
   window.addEventListener('mytrip:add-shopping', event => { if (event.detail) { addItem(event.detail); document.querySelector('#shopping')?.scrollIntoView({behavior:'smooth'}); } });
   $('#shopping-currency').value = defaultCurrency;

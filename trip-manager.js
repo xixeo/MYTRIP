@@ -19,6 +19,19 @@
     }
     localStorage.setItem(registryKey, JSON.stringify(registry)); localStorage.setItem(seedMarker, '1');
   }
+  const sheetV2Marker = 'mytrip-sheet-hokkaido-v2'; const sheetV2 = window.MYTRIP_HOKKAIDO_V2;
+  if (sheetV2 && !localStorage.getItem(sheetV2Marker)) {
+    const plannerKey = `mytrip-user-planner-v1:${sheetV2.tripId}`; const infoKey = `mytrip-travel-info-v1:${sheetV2.tripId}`; const shoppingKey = `weekend-trip-shopping-v2:${sheetV2.tripId}`;
+    try {
+      const planner = JSON.parse(localStorage.getItem(plannerKey) || '{"places":[],"schedule":[]}');
+      const alternatives = sheetV2.alternatives.map((item, index) => { let place=planner.places.find(candidate=>candidate.name===item.name); if(!place){ place={id:`place-alternative-${index + 1}`,name:item.name,type:item.type || '기타',country:'일본',address:'홋카이도',localName:'',phone:'',website:'',lat:null,lon:null,checkedAt:'',note:`대안 장소 · ${item.note}`,updatedAt:new Date().toISOString()}; planner.places.push(place); } return {id:`alternative-${index + 1}`,...item,placeId:place.id}; });
+      localStorage.setItem(plannerKey, JSON.stringify(planner));
+      localStorage.setItem(`mytrip-alternatives-v1:${sheetV2.tripId}`, JSON.stringify(alternatives));
+      const info = JSON.parse(localStorage.getItem(infoKey) || '{"reservations":[],"checklist":[]}'); info.checklist = info.checklist.filter(item => sheetV2.checklistNames.includes(item.name)); localStorage.setItem(infoKey, JSON.stringify(info));
+      const shopping = JSON.parse(localStorage.getItem(shoppingKey) || '[]').map(item => { const match=String(item.name).match(/¥\s*([\d,]+)/); return {...item, name:match ? String(item.name).replace(/\s*¥\s*[\d,]+/,'').trim() : item.name, imageUrl:item.imageUrl || '', currency:'JPY', price:item.price || (match ? Number(match[1].replace(/,/g,'')) : 0)}; }); localStorage.setItem(shoppingKey, JSON.stringify(shopping));
+      localStorage.setItem(sheetV2Marker, '1');
+    } catch (_) { /* 기존 사용자 데이터가 손상된 경우 임의로 덮어쓰지 않는다. */ }
+  }
   if (!registry.trips.some(trip => trip.id === registry.activeId)) registry.activeId = registry.trips[0].id;
   const activeTrip = registry.trips.find(trip => trip.id === registry.activeId);
   const storageKey = (base, tripId = registry.activeId) => `${base}:${tripId}`;
@@ -83,7 +96,7 @@
   const setInput = (id, value = '') => { document.querySelector(id).value = value ?? ''; };
   function selectTrip(tripId) { registry.activeId = tripId; saveRegistry(); location.reload(); }
   function copyTripData(sourceId, targetId) {
-    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1']) {
+    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1', 'mytrip-alternatives-v1']) {
       const source = localStorage.getItem(storageKey(base, sourceId)); if (source) localStorage.setItem(storageKey(base, targetId), source);
     }
   }
@@ -113,7 +126,7 @@
   function deleteTrip(tripId) {
     const trip = registry.trips.find(item => item.id === tripId); if (!trip || !confirm(`“${trip.title}” 여행을 삭제할까요?`)) return;
     registry.trips = registry.trips.filter(item => item.id !== tripId); if (registry.activeId === tripId) registry.activeId = registry.trips[0].id;
-    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1']) localStorage.removeItem(storageKey(base, tripId));
+    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1', 'mytrip-alternatives-v1']) localStorage.removeItem(storageKey(base, tripId));
     saveRegistry(); if (activeTrip.id === tripId) location.reload(); else renderTrips();
   }
   document.querySelector('#trip-editor-form').addEventListener('submit', event => {
@@ -129,7 +142,7 @@
   document.querySelector('#trip-create').addEventListener('click', () => openEditor());
   document.querySelector('#trip-editor-close').addEventListener('click', () => editorDialog.close());
   document.querySelector('#trip-editor-cancel').addEventListener('click', () => { editorDialog.close(); renderTrips(); listDialog.showModal(); });
-  const transferableBases = ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1'];
+  const transferableBases = ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1', 'mytrip-alternatives-v1'];
   const transferStatus = document.querySelector('#trip-transfer-status');
   document.querySelector('#trip-export').addEventListener('click', () => {
     const trip = registry.trips.find(item => item.id === registry.activeId);

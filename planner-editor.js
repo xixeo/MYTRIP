@@ -204,6 +204,7 @@
     }
     openPlaceEditor(place.id);
   });
+  window.addEventListener('mytrip:add-alternative', event => { const placeId=event.detail?.placeId; if (placeId && state.places.some(place => place.id === placeId)) openScheduleEditor(null, placeId); });
   document.addEventListener('click', event => { const target = event.target.closest('[data-expanded-day], [data-user-day]'); const day = target?.dataset.expandedDay || target?.dataset.userDay; if (day) { activeDay = day; if (target.dataset.userDay) { document.querySelectorAll('[data-user-day]').forEach(button => button.setAttribute('aria-pressed', String(button === target))); } renderSchedule(); } });
   renderPlaces(); renderSchedule();
 })();

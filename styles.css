@@ -795,6 +795,9 @@ dialog::backdrop { background: #33213d99; }
 .shopping-list-tools input, .shopping-list-tools select { width: 100%; min-height: 38px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); font: inherit; }
 .shopping-list-more { display: flex; margin: 12px auto 0; }
 .shopping-item { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+.shopping-thumb { display: grid; flex: none; width: 58px; height: 58px; place-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--blue-light); }
+.shopping-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.shopping-thumb-placeholder { font-size: 1.45rem; }
 .shopping-check { flex: none; width: 30px; height: 30px; border: 2px solid var(--lavender); border-radius: 9px; color: #fff; background: #fff; font-weight: 900; cursor: pointer; }
 .shopping-item.is-done .shopping-check { border-color: var(--navy); background: var(--navy); }
 .shopping-copy { display: grid; flex: 1; min-width: 0; }
@@ -802,6 +805,9 @@ dialog::backdrop { background: #33213d99; }
 .shopping-copy span { margin-top: 3px; color: var(--muted); font-size: .74rem; }
 .shopping-copy small { margin-top: 4px; color: var(--muted); font-size: .7rem; }
 .shopping-copy .shopping-conversion { color: var(--navy); font-weight: 800; }
+.shopping-copy .shopping-local-price { color: var(--ink); font-weight: 800; }
+.shopping-item-actions { display: grid; flex: none; gap: 7px; justify-items: end; }
+.shopping-edit { border: 0; color: var(--purple); background: transparent; font-size: .72rem; font-weight: 800; }
 .shopping-item.is-done .shopping-copy { opacity: .58; text-decoration: line-through; }
 .shopping-remove { border: 0; color: var(--berry); background: transparent; font: inherit; font-size: .72rem; font-weight: 800; cursor: pointer; }
 .travel-symbol { display: grid; width: 100%; height: 100%; place-items: center; background: linear-gradient(145deg, #fdf0f7, #e8f1ff); font-size: clamp(4rem, 14vw, 8rem); }
@@ -882,6 +888,14 @@ dialog::backdrop { background: #33213d99; }
 .editor-error { min-height: 1.2em; margin: 8px 0 0; color: var(--berry); font-size: .75rem; font-weight: 800; }
 .custom-trip .route-strip, .custom-trip .reference-schedule, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
 .custom-trip #user-schedule { margin-top: 12px; }
+.alternative-plans { margin-top: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff8e8; }
+.alternative-filters { margin-top: 12px; }
+.alternative-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin-top: 10px; }
+.alternative-card { display: flex; min-width: 0; flex-direction: column; padding: 12px; border: 1px solid #dfc28a; border-radius: 10px; background: #fff; }
+.alternative-card-head h4 { margin: 6px 0 0; font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.alternative-menu { margin-top: 8px; color: var(--navy); font-size: .76rem; font-weight: 800; }
+.alternative-note { flex: 1; margin: 5px 0 10px; color: var(--muted); font-size: .72rem; }
+.alternative-card .button { align-self: flex-start; font-size: .7rem; }
 
 .window-info .window-bar { background: #d8f1e3; }
 .info-layout { display: grid; gap: 28px; }
@@ -967,6 +981,12 @@ dialog::backdrop { background: #33213d99; }
   .cloud-login-form { grid-template-columns: 1fr; }
   .cloud-trip-card { align-items: flex-start; flex-direction: column; }
   .shopping-list-tools { grid-template-columns: minmax(0, 1fr) 105px; }
+  .alternative-list { grid-template-columns: 1fr; }
+  .shopping-item { display: grid; grid-template-columns: 48px minmax(0,1fr) auto; grid-template-rows: auto auto; align-items: start; gap: 7px 9px; }
+  .shopping-thumb { grid-column: 1; grid-row: 1; width: 48px; height: 48px; }
+  .shopping-item > .shopping-check { grid-column: 1; grid-row: 2; justify-self: center; }
+  .shopping-item > .shopping-copy { grid-column: 2; grid-row: 1 / 3; }
+  .shopping-item > .shopping-item-actions { grid-column: 3; grid-row: 1 / 3; }
 }
 @media (max-width: 900px) {
   .shopping-section-head { display: grid; align-items: start; }

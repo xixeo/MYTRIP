@@ -17,10 +17,12 @@
   <script src="./menus.js" defer></script>
   <script src="./expanded.js?v=trip-maps" defer></script>
   <script src="./imported-hokkaido.js?v=sheet-20261107" defer></script>
+  <script src="./sheet-enhancements.js?v=sheet-v2" defer></script>
   <script src="./trip-manager.js" defer></script>
   <script src="./cloud-sync.js" defer></script>
   <script src="./app.js?v=parking" defer></script>
   <script src="./shopping.js" defer></script>
+  <script src="./alternatives.js" defer></script>
   <script src="./travel-info.js" defer></script>
   <script src="./planner-editor.js" defer></script>
   <script src="./mobile-nav.js" defer></script>
@@ -86,6 +88,11 @@
           <p id="user-schedule-empty" class="schedule-empty"><strong>이 날짜에는 아직 일정이 없어요.</strong><span>위의 ‘일정 추가’에서 장소를 검색하거나 새로 만들 수 있어요.</span></p>
           <ol id="user-schedule-list" class="timeline user-timeline"></ol>
         </section>
+        <section id="alternatives" class="alternative-plans" aria-labelledby="alternatives-title" hidden>
+          <div class="user-section-head"><div><p class="shopping-kicker">PLAN B</p><h3 id="alternatives-title">못 갔을 때 대안</h3><p>대기·휴무·동선 변경 때 대신 선택할 장소예요.</p></div></div>
+          <div id="alternative-filters" class="chips alternative-filters" role="group" aria-label="대안 날짜 필터"></div>
+          <div id="alternative-list" class="alternative-list"></div>
+        </section>
         <details class="reference-schedule">
           <summary>추천 일정 참고하기</summary>
           <div id="expanded-panel" aria-live="polite"></div>
@@ -113,6 +120,7 @@
           <label><span>통화</span><select id="shopping-currency"><option value="KRW">KRW 원</option><option value="JPY">JPY 엔</option><option value="USD">USD 달러</option><option value="EUR">EUR 유로</option><option value="CNY">CNY 위안</option><option value="THB">THB 바트</option><option value="SGD">SGD 달러</option><option value="HKD">HKD 달러</option></select></label>
           <label><span>개당 예상 금액</span><input id="shopping-price" type="number" min="0" step="any" placeholder="0" inputmode="decimal"></label>
           <label class="shopping-note-field"><span>메모</span><input id="shopping-note" maxlength="100" placeholder="보관 방법, 선물할 사람, 확인할 내용"></label>
+          <label class="shopping-note-field"><span>상품 사진 URL</span><input id="shopping-image" type="url" maxlength="500" placeholder="https:// 이미지 주소 (선택)"></label>
           <button class="button primary shopping-add" type="submit">목록에 추가</button>
         </form>
         <div class="shopping-summary" aria-live="polite">
@@ -240,6 +248,24 @@
         <label class="editor-wide"><span>일정 메모</span><textarea id="schedule-note" rows="2" maxlength="300" placeholder="예약 시각, 주문 마감, 이동 메모"></textarea></label>
       </div>
       <div class="editor-actions"><button id="schedule-delete" class="button danger" type="button" hidden>일정 삭제</button><button id="schedule-duplicate" class="button secondary" type="button" hidden>일정 복제</button><button class="button secondary" type="button" data-close-schedule-editor>취소</button><button class="button primary" type="submit">저장</button></div>
+    </form>
+  </dialog>
+  <dialog id="shopping-editor-dialog" class="editor-dialog" aria-labelledby="shopping-editor-title">
+    <form id="shopping-editor-form" class="dialog-shell editor-form">
+      <button class="dialog-close" type="button" data-close-shopping-editor aria-label="쇼핑 항목 편집 닫기">×</button>
+      <p class="shopping-kicker">SHOPPING ITEM</p><h2 id="shopping-editor-title">쇼핑 항목 수정</h2>
+      <div class="editor-grid">
+        <label class="editor-wide"><span>상품명 *</span><input id="shopping-edit-name" required maxlength="80"></label>
+        <label><span>구매할 곳</span><input id="shopping-edit-store" maxlength="80"></label>
+        <label><span>분류</span><select id="shopping-edit-category"><option>먹거리</option><option>기념품</option><option>체험</option><option>생활용품</option><option>기타</option></select></label>
+        <label><span>통화</span><select id="shopping-edit-currency"><option value="KRW">KRW 원</option><option value="JPY">JPY 엔</option><option value="USD">USD 달러</option><option value="EUR">EUR 유로</option><option value="CNY">CNY 위안</option><option value="THB">THB 바트</option><option value="SGD">SGD 달러</option><option value="HKD">HKD 달러</option></select></label>
+        <label><span>수량</span><input id="shopping-edit-quantity" type="number" min="1" max="99" inputmode="numeric"></label>
+        <label><span>개당 현지 가격</span><input id="shopping-edit-price" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label class="editor-wide"><span>상품 사진 URL</span><input id="shopping-edit-image" type="url" maxlength="500" placeholder="https://"></label>
+        <label class="editor-wide"><span>메모</span><textarea id="shopping-edit-note" rows="3" maxlength="300"></textarea></label>
+      </div>
+      <p class="editor-help">현지 가격을 입력하면 최신 환율 기준 한국 가격을 함께 표시합니다.</p>
+      <div class="editor-actions"><button class="button secondary" type="button" data-close-shopping-editor>취소</button><button class="button primary" type="submit">저장</button></div>
     </form>
   </dialog>
   <dialog id="trip-list-dialog" class="editor-dialog" aria-labelledby="trip-list-title">

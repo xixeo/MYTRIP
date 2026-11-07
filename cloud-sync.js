@@ -4,7 +4,7 @@
   const publishableKey = 'sb_publishable_wlcErS00bB8Bm9638KSYQw_As9W6Jjv';
   const sessionKey = 'mytrip-supabase-session-v1';
   const registryKey = 'mytrip-trip-registry-v1';
-  const bases = ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1'];
+  const bases = ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1', 'mytrip-alternatives-v1'];
   const $ = selector => document.querySelector(selector);
   if (!$('#cloud-login-form')) return;
   let session = null;
