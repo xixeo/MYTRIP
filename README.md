@@ -48,6 +48,13 @@ npm start
 - 현재 보고 있는 영역을 메뉴에서 강조하며 iPhone 안전 영역을 포함해 본문이 메뉴 뒤에 가리지 않도록 여백을 확보합니다.
 - 320~430px 휴대폰과 가로 모드 검사는 `npm run test:mobile`로 반복할 수 있습니다.
 
+## 제품 구조
+
+- 모바일 주 메뉴는 **홈 / 일정 / 쇼핑 / 준비 / 여행 목록**입니다.
+- 홈에서 출발 상태, 전체 일정, 예약 확정, 남은 확인, 가격 미입력, 대안 수와 날짜별 일정을 확인합니다.
+- 저장 장소는 일정에 아직 넣지 않은 후보 보관함이며 일정 화면의 **후보 장소**에서 접근합니다.
+- 데이터별 책임과 전체 사용자 흐름은 [`docs/product-redesign-v1.md`](./docs/product-redesign-v1.md)에 정리했습니다.
+
 ## Supabase 준비
 
 클라우드 동기화를 연결할 때는 Supabase Dashboard의 **SQL Editor**에서 [`supabase/schema.sql`](./supabase/schema.sql)을 한 번 실행합니다. 이 스키마는 로그인한 사용자가 자신의 여행 스냅샷만 읽고 수정하도록 RLS를 적용합니다. 브라우저에는 publishable key만 사용하며 Secret 또는 `service_role` 키를 넣지 않습니다.

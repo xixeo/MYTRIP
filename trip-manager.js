@@ -19,7 +19,7 @@
     }
     localStorage.setItem(registryKey, JSON.stringify(registry)); localStorage.setItem(seedMarker, '1');
   }
-  const sheetV2Marker = 'mytrip-sheet-hokkaido-v2'; const sheetV2 = window.MYTRIP_HOKKAIDO_V2;
+  const sheetV2Marker = 'mytrip-sheet-hokkaido-v3'; const sheetV2 = window.MYTRIP_HOKKAIDO_V2;
   if (sheetV2 && !localStorage.getItem(sheetV2Marker)) {
     const plannerKey = `mytrip-user-planner-v1:${sheetV2.tripId}`; const infoKey = `mytrip-travel-info-v1:${sheetV2.tripId}`; const shoppingKey = `weekend-trip-shopping-v2:${sheetV2.tripId}`;
     try {
@@ -27,8 +27,8 @@
       const alternatives = sheetV2.alternatives.map((item, index) => { let place=planner.places.find(candidate=>candidate.name===item.name); if(!place){ place={id:`place-alternative-${index + 1}`,name:item.name,type:item.type || '기타',country:'일본',address:'홋카이도',localName:'',phone:'',website:'',lat:null,lon:null,checkedAt:'',note:`대안 장소 · ${item.note}`,updatedAt:new Date().toISOString()}; planner.places.push(place); } return {id:`alternative-${index + 1}`,...item,placeId:place.id}; });
       localStorage.setItem(plannerKey, JSON.stringify(planner));
       localStorage.setItem(`mytrip-alternatives-v1:${sheetV2.tripId}`, JSON.stringify(alternatives));
-      const info = JSON.parse(localStorage.getItem(infoKey) || '{"reservations":[],"checklist":[]}'); info.checklist = info.checklist.filter(item => sheetV2.checklistNames.includes(item.name)); localStorage.setItem(infoKey, JSON.stringify(info));
-      const shopping = JSON.parse(localStorage.getItem(shoppingKey) || '[]').map(item => { const match=String(item.name).match(/¥\s*([\d,]+)/); return {...item, name:match ? String(item.name).replace(/\s*¥\s*[\d,]+/,'').trim() : item.name, imageUrl:item.imageUrl || '', currency:'JPY', price:item.price || (match ? Number(match[1].replace(/,/g,'')) : 0)}; }); localStorage.setItem(shoppingKey, JSON.stringify(shopping));
+      const info = JSON.parse(localStorage.getItem(infoKey) || '{"reservations":[],"checklist":[]}'); info.checklist = info.checklist.filter(item => sheetV2.checklistNames.includes(item.name)); info.reservations=info.reservations.map(item=>{const place=planner.places.find(candidate=>candidate.name===item.name);const schedule=place?planner.schedule.find(candidate=>candidate.placeId===place.id&&candidate.day===item.date):null;return {...item,scheduleId:schedule?.id || ''};}); localStorage.setItem(infoKey, JSON.stringify(info));
+      const shopping = JSON.parse(localStorage.getItem(shoppingKey) || '[]').map(item => { const match=String(item.name).match(/¥\s*([\d,]+)/); const place=planner.places.find(candidate=>candidate.name===item.store); return {...item, name:match ? String(item.name).replace(/\s*¥\s*[\d,]+/,'').trim() : item.name, imageUrl:item.imageUrl || '', placeId:item.placeId || place?.id || '', currency:'JPY', price:item.price || (match ? Number(match[1].replace(/,/g,'')) : 0)}; }); localStorage.setItem(shoppingKey, JSON.stringify(shopping));
       localStorage.setItem(sheetV2Marker, '1');
     } catch (_) { /* 기존 사용자 데이터가 손상된 경우 임의로 덮어쓰지 않는다. */ }
   }

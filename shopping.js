@@ -26,7 +26,7 @@
   try { exchangeRates = JSON.parse(localStorage.getItem(exchangeStorageKey) || (window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('mytrip-exchange-rates-v1') : null) || '{}'); } catch (_) { exchangeRates = {}; }
   const won = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
   const money = (value, currency = 'KRW') => new Intl.NumberFormat('ko-KR', {style:'currency', currency, maximumFractionDigits:['KRW','JPY'].includes(currency) ? 0 : 2}).format(Number(value || 0));
-  const save = () => localStorage.setItem(storageKey, JSON.stringify(items));
+  const save = () => { localStorage.setItem(storageKey, JSON.stringify(items)); window.dispatchEvent(new Event('mytrip:data-changed')); };
   const saveRates = () => localStorage.setItem(exchangeStorageKey, JSON.stringify(exchangeRates));
   const make = (tag, className, text) => { const element = document.createElement(tag); if (className) element.className = className; if (text !== undefined) element.textContent = text; return element; };
   const imageFallback = item => { const fallback=make('span','shopping-thumb-placeholder',item.category === '먹거리' ? '🍴' : item.category === '생활용품' ? '🧴' : '🛍'); fallback.setAttribute('role','img'); fallback.setAttribute('aria-label','상품 사진 미등록'); return fallback; };

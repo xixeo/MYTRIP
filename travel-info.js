@@ -8,7 +8,7 @@
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && Array.isArray(saved.reservations) && Array.isArray(saved.checklist)) state = saved;
   } catch (_) { /* 손상된 저장값은 빈 목록으로 복구한다. */ }
-  const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
+  const save = () => { localStorage.setItem(storageKey, JSON.stringify(state)); window.dispatchEvent(new Event('mytrip:data-changed')); };
   const id = prefix => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const make = (tag, className, text) => { const el = document.createElement(tag); if (className) el.className = className; if (text !== undefined) el.textContent = text; return el; };
   const button = (label, className, action, ariaLabel = '') => { const el = make('button', className, label); el.type = 'button'; if (ariaLabel) el.setAttribute('aria-label', ariaLabel); el.addEventListener('click', action); return el; };
@@ -20,7 +20,7 @@
       const row = make('li', 'info-item');
       const copy = make('div', 'info-copy');
       const title = make('div', 'info-title'); title.append(make('span', 'shopping-category', item.type), make('strong', '', item.name), make('span', `reservation-status status-${item.status === '확정' ? 'confirmed' : 'pending'}`, item.status));
-      const meta = [item.date, item.time, item.number ? `예약번호 ${item.number}` : ''].filter(Boolean).join(' · ');
+      const meta = [item.date, item.time, item.scheduleId ? '일정 연결됨' : '', item.number ? `예약번호 ${item.number}` : ''].filter(Boolean).join(' · ');
       copy.append(title, make('span', '', meta || '날짜·예약번호 미입력'));
       if (item.note) copy.append(make('small', '', item.note));
       const actions = make('div', 'info-actions');

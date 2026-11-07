@@ -35,6 +35,12 @@ const {chromium} = require('playwright-core');
     currency:document.querySelector('#shopping-currency')?.value
   }));
   if (seeded.tabs !== 4 || seeded.schedule !== 10 || seeded.shoppingVisible !== 12 || !seeded.shoppingTotal.includes('/ 52') || seeded.reservations !== 5 || seeded.checklist !== 4 || seeded.alternatives !== 6 || seeded.currency !== 'JPY') throw new Error(`홋카이도 시트 화면 반영 오류: ${JSON.stringify(seeded)}`);
+  const overview=await page.locator('#overview-metrics').textContent(); if(!overview.includes('54전체 일정') || !overview.includes('4/5예약 확정') || !overview.includes('4남은 확인') || !overview.includes('6대안 플랜')) throw new Error(`홈 준비 현황 오류: ${overview}`);
+  const mobileNav=await page.locator('.masthead nav').textContent(); if(!mobileNav.includes('홈') || !mobileNav.includes('일정') || !mobileNav.includes('쇼핑') || !mobileNav.includes('준비')) throw new Error(`모바일 정보 구조 오류: ${mobileNav}`);
+  const timelineMaps = await page.locator('#user-schedule-list .schedule-map-link').count(); const firstMapHref=await page.locator('#user-schedule-list .schedule-map-link').first().getAttribute('href');
+  if (timelineMaps !== 10 || !firstMapHref.startsWith('https://www.google.com/maps/')) throw new Error(`일정 지도 링크 오류: ${timelineMaps}, ${firstMapHref}`);
+  if (await page.locator('#user-place-grid .user-place-card').count() !== 6) throw new Error('일정 미배치 후보가 6개로 표시되지 않습니다.');
+  await page.click('#place-all-filter'); if (await page.locator('#user-place-grid .user-place-card').count() < 59) throw new Error('저장 장소 전체 목록이 표시되지 않습니다.'); await page.click('#place-unscheduled-filter');
   const alternativeLinks = await page.evaluate(() => JSON.parse(localStorage.getItem('mytrip-alternatives-v1:hokkaido-2026-11') || '[]').filter(item => item.placeId).length);
   if (alternativeLinks !== 6) throw new Error(`대안 장소 일정 연결 누락: ${alternativeLinks}/6`);
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('JP¥9,980') && document.querySelector('#shopping-list')?.textContent.includes('한국 가격'));
