@@ -72,13 +72,28 @@
     for (const base of bases) if (snapshot.data[base] !== null && snapshot.data[base] !== undefined) localStorage.setItem(`${base}:${remoteTrip.id}`, JSON.stringify(snapshot.data[base]));
     registry.activeId = remoteTrip.id; localStorage.setItem(registryKey, JSON.stringify(registry)); location.reload();
   }
+  const tripPeriodLabel = trip => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!trip?.startDate || !trip?.endDate) return '날짜 미확인';
+    if (trip.endDate < today) return '지난 여행';
+    if (trip.startDate > today) return '다가오는 여행';
+    return '여행 중';
+  };
   async function loadCloudTrips() {
     if (busy || !await ensureSession()) return; status('클라우드 여행 목록을 불러오는 중…');
     try {
       const rows = await api('/rest/v1/mytrip_snapshots?select=trip_id,title,payload,updated_at&order=updated_at.desc', {headers:authHeaders()});
       $('#cloud-trip-list').replaceChildren(...rows.map(row => {
         const card = document.createElement('article'); card.className = 'cloud-trip-card';
-        const copy = document.createElement('div'); const title = document.createElement('strong'); title.textContent = row.title; const time = document.createElement('small'); time.textContent = `${new Date(row.updated_at).toLocaleString('ko-KR')} 저장`; copy.append(title, time);
+        const copy = document.createElement('div');
+        const title = document.createElement('strong'); title.textContent = row.title;
+        const trip = row.payload?.trip;
+        const period = document.createElement('small');
+        period.textContent = trip?.startDate && trip?.endDate
+          ? `${tripPeriodLabel(trip)} · ${trip.startDate} — ${trip.endDate}`
+          : tripPeriodLabel(trip);
+        const time = document.createElement('small'); time.textContent = `${new Date(row.updated_at).toLocaleString('ko-KR')} 저장`;
+        copy.append(title, period, time);
         const button = document.createElement('button'); button.type = 'button'; button.className = 'button secondary'; button.textContent = '이 기기로 불러오기'; button.addEventListener('click', () => { if (confirm(`“${row.title}”의 클라우드 저장본을 이 기기로 불러올까요? 같은 여행의 로컬 변경은 덮어씁니다.`)) importSnapshot(row.payload); });
         card.append(copy, button); return card;
       }));

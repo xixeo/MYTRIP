@@ -19,23 +19,77 @@
     }
     localStorage.setItem(registryKey, JSON.stringify(registry)); localStorage.setItem(seedMarker, '1');
   }
-  const sheetV2Marker = 'mytrip-sheet-hokkaido-v3'; const sheetV2 = window.MYTRIP_HOKKAIDO_V2;
+  const sheetV2Marker = 'mytrip-sheet-hokkaido-v3';
+  const sheetV2 = window.MYTRIP_HOKKAIDO_V2;
   if (sheetV2 && !localStorage.getItem(sheetV2Marker)) {
-    const plannerKey = `mytrip-user-planner-v1:${sheetV2.tripId}`; const infoKey = `mytrip-travel-info-v1:${sheetV2.tripId}`; const shoppingKey = `weekend-trip-shopping-v2:${sheetV2.tripId}`;
+    const plannerKey = `mytrip-user-planner-v1:${sheetV2.tripId}`;
+    const infoKey = `mytrip-travel-info-v1:${sheetV2.tripId}`;
+    const shoppingKey = `weekend-trip-shopping-v2:${sheetV2.tripId}`;
     try {
       const planner = JSON.parse(localStorage.getItem(plannerKey) || '{"places":[],"schedule":[]}');
-      const alternatives = sheetV2.alternatives.map((item, index) => { let place=planner.places.find(candidate=>candidate.name===item.name); if(!place){ place={id:`place-alternative-${index + 1}`,name:item.name,type:item.type || '기타',country:'일본',address:'홋카이도',localName:'',phone:'',website:'',lat:null,lon:null,checkedAt:'',note:`대안 장소 · ${item.note}`,updatedAt:new Date().toISOString()}; planner.places.push(place); } return {id:`alternative-${index + 1}`,...item,placeId:place.id}; });
+      const alternatives = sheetV2.alternatives.map((item, index) => {
+        let place = planner.places.find(candidate => candidate.name === item.name);
+        if (!place) {
+          place = {
+            id: `place-alternative-${index + 1}`,
+            name: item.name,
+            type: item.type || '기타',
+            country: '일본',
+            address: '홋카이도',
+            localName: '', phone: '', website: '', lat: null, lon: null, checkedAt: '',
+            note: `대안 장소 · ${item.note}`,
+            updatedAt: new Date().toISOString()
+          };
+          planner.places.push(place);
+        }
+        return {id:`alternative-${index + 1}`, ...item, placeId:place.id};
+      });
       localStorage.setItem(plannerKey, JSON.stringify(planner));
       localStorage.setItem(`mytrip-alternatives-v1:${sheetV2.tripId}`, JSON.stringify(alternatives));
-      const info = JSON.parse(localStorage.getItem(infoKey) || '{"reservations":[],"checklist":[]}'); info.checklist = info.checklist.filter(item => sheetV2.checklistNames.includes(item.name)); info.reservations=info.reservations.map(item=>{const place=planner.places.find(candidate=>candidate.name===item.name);const schedule=place?planner.schedule.find(candidate=>candidate.placeId===place.id&&candidate.day===item.date):null;return {...item,scheduleId:schedule?.id || ''};}); localStorage.setItem(infoKey, JSON.stringify(info));
-      const shopping = JSON.parse(localStorage.getItem(shoppingKey) || '[]').map(item => { const match=String(item.name).match(/¥\s*([\d,]+)/); const place=planner.places.find(candidate=>candidate.name===item.store); return {...item, name:match ? String(item.name).replace(/\s*¥\s*[\d,]+/,'').trim() : item.name, imageUrl:item.imageUrl || '', placeId:item.placeId || place?.id || '', currency:'JPY', price:item.price || (match ? Number(match[1].replace(/,/g,'')) : 0)}; }); localStorage.setItem(shoppingKey, JSON.stringify(shopping));
+      const info = JSON.parse(localStorage.getItem(infoKey) || '{"reservations":[],"checklist":[]}');
+      info.checklist = info.checklist.filter(item => sheetV2.checklistNames.includes(item.name));
+      info.reservations = info.reservations.map(item => {
+        const place = planner.places.find(candidate => candidate.name === item.name);
+        const schedule = place ? planner.schedule.find(candidate => candidate.placeId === place.id && candidate.day === item.date) : null;
+        return {...item, scheduleId:schedule?.id || ''};
+      });
+      localStorage.setItem(infoKey, JSON.stringify(info));
+      const shopping = JSON.parse(localStorage.getItem(shoppingKey) || '[]').map(item => {
+        const match = String(item.name).match(/¥\s*([\d,]+)/);
+        const place = planner.places.find(candidate => candidate.name === item.store);
+        return {
+          ...item,
+          name: match ? String(item.name).replace(/\s*¥\s*[\d,]+/, '').trim() : item.name,
+          imageUrl: item.imageUrl || '',
+          placeId: item.placeId || place?.id || '',
+          currency: 'JPY',
+          price: item.price || (match ? Number(match[1].replace(/,/g, '')) : 0)
+        };
+      });
+      localStorage.setItem(shoppingKey, JSON.stringify(shopping));
       localStorage.setItem(sheetV2Marker, '1');
     } catch (_) { /* 기존 사용자 데이터가 손상된 경우 임의로 덮어쓰지 않는다. */ }
   }
-  const shoppingSheetMarker='mytrip-hokkaido-shopping-sheet-v1';
-  if(Array.isArray(window.MYTRIP_HOKKAIDO_SHOPPING_V1) && !localStorage.getItem(shoppingSheetMarker)){
-    const key='weekend-trip-shopping-v2:hokkaido-2026-11';let existing=[];try{existing=JSON.parse(localStorage.getItem(key)||'[]')}catch(_){}
-    const byName=new Map(existing.map(item=>[item.name,item]));const imported=window.MYTRIP_HOKKAIDO_SHOPPING_V1.map(item=>{const old=byName.get(item.name);return old ? {...item,...old,id:item.id,localName:item.localName,sheetCategory:item.sheetCategory,sourceUrl:item.sourceUrl,sourceRow:item.sourceRow,imageUrl:old.imageUrl || item.imageUrl} : item;});localStorage.setItem(key,JSON.stringify(imported));localStorage.setItem(shoppingSheetMarker,'1');
+  const shoppingSheetMarker = 'mytrip-hokkaido-shopping-sheet-v1';
+  if (Array.isArray(window.MYTRIP_HOKKAIDO_SHOPPING_V1) && !localStorage.getItem(shoppingSheetMarker)) {
+    const key = 'weekend-trip-shopping-v2:hokkaido-2026-11';
+    let existing = [];
+    try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { existing = []; }
+    const byName = new Map(existing.map(item => [item.name, item]));
+    const imported = window.MYTRIP_HOKKAIDO_SHOPPING_V1.map(item => {
+      const old = byName.get(item.name);
+      return old ? {
+        ...item, ...old,
+        id:item.id,
+        localName:item.localName,
+        sheetCategory:item.sheetCategory,
+        sourceUrl:item.sourceUrl,
+        sourceRow:item.sourceRow,
+        imageUrl:old.imageUrl || item.imageUrl
+      } : item;
+    });
+    localStorage.setItem(key, JSON.stringify(imported));
+    localStorage.setItem(shoppingSheetMarker, '1');
   }
   if (!registry.trips.some(trip => trip.id === registry.activeId)) registry.activeId = registry.trips[0].id;
   const activeTrip = registry.trips.find(trip => trip.id === registry.activeId);
@@ -105,17 +159,55 @@
       const source = localStorage.getItem(storageKey(base, sourceId)); if (source) localStorage.setItem(storageKey(base, targetId), source);
     }
   }
+  const tripPeriod = trip => {
+    const today = isoFromDate(new Date());
+    if (trip.endDate < today) return 'past';
+    if (trip.startDate > today) return 'upcoming';
+    return 'current';
+  };
+  const tripGroups = [
+    {id:'current', title:'여행 중', empty:'현재 진행 중인 여행이 없어요.'},
+    {id:'upcoming', title:'다가오는 여행', empty:'예정된 여행이 없어요.'},
+    {id:'past', title:'지난 여행', empty:'아직 지난 여행 기록이 없어요.'}
+  ];
+  function tripCard(trip) {
+    const card = document.createElement('article');
+    card.className = `trip-list-card${trip.id === registry.activeId ? ' is-active' : ''}`;
+    const copy = document.createElement('div');
+    const title = document.createElement('h3'); title.textContent = trip.title;
+    const meta = document.createElement('p'); meta.textContent = `${trip.destination} · ${trip.country}`;
+    const date = document.createElement('small'); date.textContent = `${trip.startDate} — ${trip.endDate}`;
+    copy.append(title, meta, date);
+    const actions = document.createElement('div'); actions.className = 'trip-card-actions';
+    if (trip.id !== registry.activeId) actions.append(button('열기', 'button primary', () => selectTrip(trip.id)));
+    else { const badge = document.createElement('span'); badge.className = 'pill'; badge.textContent = '현재 열림'; actions.append(badge); }
+    actions.append(
+      button('수정', 'button secondary', () => openEditor(trip.id)),
+      button('복제', 'button secondary', () => duplicateTrip(trip.id))
+    );
+    if (registry.trips.length > 1) actions.append(button('삭제', 'trip-delete', () => deleteTrip(trip.id)));
+    card.append(copy, actions);
+    return card;
+  }
   function renderTrips() {
-    const list = document.querySelector('#trip-list'); list.replaceChildren(...registry.trips.map(trip => {
-      const card = document.createElement('article'); card.className = `trip-list-card${trip.id === registry.activeId ? ' is-active' : ''}`;
-      const copy = document.createElement('div'); const title = document.createElement('h3'); title.textContent = trip.title; const meta = document.createElement('p'); meta.textContent = `${trip.destination} · ${trip.country}`; const date = document.createElement('small'); date.textContent = `${trip.startDate} — ${trip.endDate}`; copy.append(title, meta, date);
-      const actions = document.createElement('div'); actions.className = 'trip-card-actions';
-      if (trip.id !== registry.activeId) actions.append(button('선택', 'button primary', () => selectTrip(trip.id)));
-      else { const badge = document.createElement('span'); badge.className = 'pill'; badge.textContent = '사용 중'; actions.append(badge); }
-      actions.append(button('수정', 'button secondary', () => openEditor(trip.id)), button('복제', 'button secondary', () => duplicateTrip(trip.id)));
-      if (registry.trips.length > 1) actions.append(button('삭제', 'trip-delete', () => deleteTrip(trip.id)));
-      card.append(copy, actions); return card;
-    }));
+    const list = document.querySelector('#trip-list');
+    const sections = tripGroups.map(group => {
+      const trips = registry.trips
+        .filter(trip => tripPeriod(trip) === group.id)
+        .sort((a, b) => group.id === 'past'
+          ? b.endDate.localeCompare(a.endDate)
+          : a.startDate.localeCompare(b.startDate));
+      const section = document.createElement('section');
+      section.className = 'trip-list-group';
+      section.dataset.tripPeriod = group.id;
+      const heading = document.createElement('h3');
+      heading.textContent = `${group.title} ${trips.length}`;
+      section.append(heading);
+      if (trips.length) section.append(...trips.map(tripCard));
+      else { const empty = document.createElement('p'); empty.className = 'trip-list-empty'; empty.textContent = group.empty; section.append(empty); }
+      return section;
+    });
+    list.replaceChildren(...sections);
   }
   const button = (label, className, action) => { const element = document.createElement('button'); element.type = 'button'; element.className = className; element.textContent = label; element.addEventListener('click', action); return element; };
   function openEditor(tripId = null) {

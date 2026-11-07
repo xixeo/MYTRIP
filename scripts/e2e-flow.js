@@ -53,6 +53,8 @@ const {chromium} = require('playwright-core');
 
   step('create trip');
   await page.click('#trip-list-open');
+  const tripGroups = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.trip-list-group')].map(group => [group.dataset.tripPeriod, group.querySelectorAll('.trip-list-card').length])));
+  if (tripGroups.current !== 1 || tripGroups.upcoming !== 1 || tripGroups.past !== 0) throw new Error(`여행 목록 기간 분류 오류: ${JSON.stringify(tripGroups)}`);
   await page.click('#trip-create');
   await page.fill('#trip-name', '도쿄 테스트 여행');
   await page.fill('#trip-destination', '도쿄');

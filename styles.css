@@ -902,7 +902,10 @@ dialog::backdrop { background: #33213d99; }
 .schedule-details { padding-top: 2px; }
 .trip-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .trip-dialog-head h2 { margin: 0; color: var(--navy); font-size: 1.35rem; }
-.trip-list { display: grid; gap: 9px; }
+.trip-list { display: grid; gap: 18px; }
+.trip-list-group { display: grid; gap: 9px; }
+.trip-list-group > h3 { color: var(--navy); font-size: .8rem; }
+.trip-list-empty { margin: 0; padding: 12px; border: 1px dashed var(--line); border-radius: 9px; color: var(--muted); background: var(--card); font-size: .74rem; }
 .trip-list-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .trip-list-card.is-active { border: 2px solid var(--navy); background: var(--blue-light); }
 .trip-list-card h3 { margin: 0; color: var(--ink); font-size: .95rem; }

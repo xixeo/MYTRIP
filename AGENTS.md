@@ -1,41 +1,42 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# MYTRIP repository guide
 
-## Expo has changed — do not trust your training data
+MYTRIP is a mobile-first static website built with plain HTML, CSS, and browser JavaScript. It is not an Expo or React Native project.
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+## Architecture
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+- `index.html` contains the page structure and dialogs.
+- `styles.css` contains all responsive styles.
+- Feature scripts are independent IIFEs loaded with `defer`.
+- `trip-manager.js` owns the active trip and trip-scoped storage keys.
+- `planner-editor.js` owns saved places and schedule editing.
+- `shopping.js`, `travel-info.js`, and `alternatives.js` own their sections.
+- Generated Google Sheets data lives in `imported-hokkaido.js` and `shopping-sheet-data.js`.
+- Supabase is used only for optional snapshot sync. The browser remains usable without login.
 
-## Commands
-
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+## Development
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+npm install
+npm start
+npm test
+npm run test:e2e
+npm run test:mobile
+npm run test:quality
 ```
 
-Run lint and typecheck before declaring any task done.
-
-## Navigation & Routing
-
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
-
-## Building with EAS
-
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+Run `npm test` after every source change. Run the browser suites for behavior or layout changes. Browser suites expect the site at `http://127.0.0.1:4173`.
 
 ## Rules
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- Keep the site dependency-light and usable as static files on GitHub Pages.
+- Store trip-specific browser data through `window.MYTRIP_STORAGE_KEY(base)`.
+- Dispatch `mytrip:data-changed` after changing user data so summaries stay current.
+- Use `textContent` for user or imported content. Do not inject it with `innerHTML`.
+- Preserve existing user edits when migrating seeded data.
+- Open external map and source links in the current top-level page.
+- Change generated data through its importer rather than hand-editing payloads.
+- Do not commit `node_modules`, `dist`, screenshots, downloaded spreadsheets, or credentials.
+
+## Deployment
+
+Pushes to `main` deploy through `.github/workflows/pages.yml`. A Supabase publishable key may be used in browser code; secret and `service_role` keys must never be committed.
