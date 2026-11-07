@@ -59,8 +59,30 @@ const {chromium} = require('playwright-core');
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('JP¥400'));
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('현재 기준 약'), null, {timeout:15000});
 
+  step('reservation and checklist');
+  await page.fill('#reservation-name', '도쿄역 호텔');
+  await page.fill('#reservation-date', '2026-12-01');
+  await page.selectOption('#reservation-status', '확정');
+  await page.fill('#reservation-number', 'TEST-1234');
+  await page.click('#reservation-form button[type="submit"]');
+  await page.waitForFunction(() => document.querySelector('#reservation-list')?.textContent.includes('TEST-1234'));
+  await page.fill('#checklist-name', '여권');
+  await page.fill('#checklist-assignee', '나');
+  await page.click('#checklist-form button[type="submit"]');
+  await page.click('#checklist-list .shopping-check');
+  await page.waitForFunction(() => document.querySelector('#checklist-progress')?.textContent.includes('1 / 1'));
+
+  step('export backup');
+  await page.click('#trip-list-open');
+  const downloadPromise = page.waitForEvent('download');
+  await page.click('#trip-export');
+  const download = await downloadPromise;
+  const backup = JSON.parse(await require('fs').promises.readFile(await download.path(), 'utf8'));
+  if (backup.format !== 'MYTRIP_BACKUP' || backup.data['mytrip-travel-info-v1'].reservations[0].number !== 'TEST-1234') throw new Error('백업에 예약 정보가 없습니다.');
+  await page.click('#trip-list-close');
+
   await page.screenshot({path:'/tmp/mytrip-flow-mobile.png', fullPage:true});
   step('done');
-  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), screenshot:'/tmp/mytrip-flow-mobile.png'}));
+  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), reservation:await page.textContent('#reservation-list'), checklist:await page.textContent('#checklist-progress'), backup:backup.format, screenshot:'/tmp/mytrip-flow-mobile.png'}));
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });

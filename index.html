@@ -19,6 +19,7 @@
   <script src="./trip-manager.js" defer></script>
   <script src="./app.js?v=parking" defer></script>
   <script src="./shopping.js" defer></script>
+  <script src="./travel-info.js" defer></script>
   <script src="./planner-editor.js" defer></script>
 </head>
 <body id="top">
@@ -28,6 +29,7 @@
     <nav aria-label="페이지 이동">
       <a href="#expanded-plan">여행 일정</a>
       <a href="#shopping">쇼핑리스트</a>
+      <a href="#travel-info">여행 준비</a>
       <a href="#places">장소</a>
       <button id="trip-list-open" class="nav-trip-button" type="button">여행 목록</button>
     </nav>
@@ -122,6 +124,41 @@
       </div>
     </section>
 
+    <section id="travel-info" class="window window-info" aria-labelledby="travel-info-title">
+      <header class="window-bar">
+        <span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h2 id="travel-info-title">예약과 준비물</h2>
+      </header>
+      <div class="window-body info-layout">
+        <section aria-labelledby="reservation-title">
+          <div class="user-section-head"><div><p class="shopping-kicker">RESERVATIONS</p><h3 id="reservation-title">예약 정보</h3><p>숙소·항공·식당 예약을 한곳에 보관하세요.</p></div></div>
+          <form id="reservation-form" class="shopping-form info-form">
+            <label><span>종류</span><select id="reservation-type"><option>숙소</option><option>항공</option><option>식당</option><option>교통</option><option>투어·체험</option><option>기타</option></select></label>
+            <label class="shopping-note-field"><span>예약명 *</span><input id="reservation-name" required maxlength="80" placeholder="예: 도쿄역 호텔"></label>
+            <label><span>날짜</span><input id="reservation-date" type="date"></label>
+            <label><span>시간</span><input id="reservation-time" type="time"></label>
+            <label><span>상태</span><select id="reservation-status"><option>예약 예정</option><option>확정</option><option>미예약</option><option>취소</option></select></label>
+            <label><span>예약번호</span><input id="reservation-number" maxlength="60" autocomplete="off"></label>
+            <label class="shopping-note-field"><span>예약 링크</span><input id="reservation-link" type="url" maxlength="300" placeholder="https://"></label>
+            <label class="shopping-note-field"><span>메모</span><input id="reservation-note" maxlength="160" placeholder="체크인, 터미널, 인원 등"></label>
+            <button class="button primary shopping-add" type="submit">예약 추가</button>
+          </form>
+          <p id="reservation-empty" class="shopping-empty">등록한 예약이 없어요.</p>
+          <ul id="reservation-list" class="info-list" aria-label="예약 목록"></ul>
+        </section>
+        <section aria-labelledby="checklist-title">
+          <div class="user-section-head"><div><p class="shopping-kicker">CHECKLIST</p><h3 id="checklist-title">준비물</h3><p id="checklist-progress">0 / 0 준비 완료</p></div></div>
+          <form id="checklist-form" class="checklist-form">
+            <label><span>준비할 것 *</span><input id="checklist-name" required maxlength="80" placeholder="예: 여권"></label>
+            <label><span>담당</span><input id="checklist-assignee" maxlength="40" placeholder="예: 나"></label>
+            <button class="button primary" type="submit">추가</button>
+          </form>
+          <p id="checklist-empty" class="shopping-empty">아직 준비물이 없어요.</p>
+          <ul id="checklist-list" class="info-list" aria-label="준비물 목록"></ul>
+        </section>
+      </div>
+    </section>
+
     <section id="places" class="window" aria-labelledby="places-title">
       <header class="window-bar">
         <span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -204,6 +241,7 @@
     <div class="dialog-shell editor-form">
       <button class="dialog-close" id="trip-list-close" type="button" aria-label="여행 목록 닫기">×</button>
       <div class="trip-dialog-head"><div><p class="shopping-kicker">MY TRIPS</p><h2 id="trip-list-title">여행 목록</h2></div><button id="trip-create" class="button primary" type="button">+ 새 여행</button></div>
+      <div class="trip-transfer"><button id="trip-export" class="button secondary" type="button">현재 여행 내보내기</button><button id="trip-import" class="button secondary" type="button">여행 가져오기</button><input id="trip-import-file" type="file" accept="application/json,.json" hidden><p id="trip-transfer-status" role="status"></p></div>
       <div id="trip-list" class="trip-list"></div>
     </div>
   </dialog>

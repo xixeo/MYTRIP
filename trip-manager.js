@@ -71,7 +71,7 @@
   const setInput = (id, value = '') => { document.querySelector(id).value = value ?? ''; };
   function selectTrip(tripId) { registry.activeId = tripId; saveRegistry(); location.reload(); }
   function copyTripData(sourceId, targetId) {
-    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1']) {
+    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1']) {
       const source = localStorage.getItem(storageKey(base, sourceId)); if (source) localStorage.setItem(storageKey(base, targetId), source);
     }
   }
@@ -101,7 +101,7 @@
   function deleteTrip(tripId) {
     const trip = registry.trips.find(item => item.id === tripId); if (!trip || !confirm(`“${trip.title}” 여행을 삭제할까요?`)) return;
     registry.trips = registry.trips.filter(item => item.id !== tripId); if (registry.activeId === tripId) registry.activeId = registry.trips[0].id;
-    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1']) localStorage.removeItem(storageKey(base, tripId));
+    for (const base of ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1']) localStorage.removeItem(storageKey(base, tripId));
     saveRegistry(); if (activeTrip.id === tripId) location.reload(); else renderTrips();
   }
   document.querySelector('#trip-editor-form').addEventListener('submit', event => {
@@ -117,4 +117,25 @@
   document.querySelector('#trip-create').addEventListener('click', () => openEditor());
   document.querySelector('#trip-editor-close').addEventListener('click', () => editorDialog.close());
   document.querySelector('#trip-editor-cancel').addEventListener('click', () => { editorDialog.close(); renderTrips(); listDialog.showModal(); });
+  const transferableBases = ['mytrip-user-planner-v1', 'weekend-trip-shopping-v2', 'mytrip-exchange-rates-v1', 'mytrip-travel-info-v1'];
+  const transferStatus = document.querySelector('#trip-transfer-status');
+  document.querySelector('#trip-export').addEventListener('click', () => {
+    const trip = registry.trips.find(item => item.id === registry.activeId);
+    const data = Object.fromEntries(transferableBases.map(base => [base, JSON.parse(localStorage.getItem(storageKey(base)) || 'null')]));
+    const payload = {format:'MYTRIP_BACKUP', version:1, exportedAt:new Date().toISOString(), trip:{...trip, template:false}, data};
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'}); const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(blob); anchor.download = `MYTRIP-${trip.title.replace(/[^0-9A-Za-z가-힣_-]+/g, '-')}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(anchor.href), 0);
+    transferStatus.textContent = '현재 여행을 파일로 저장했습니다.';
+  });
+  document.querySelector('#trip-import').addEventListener('click', () => document.querySelector('#trip-import-file').click());
+  document.querySelector('#trip-import-file').addEventListener('change', async event => {
+    const file = event.target.files?.[0]; if (!file) return;
+    try {
+      const payload = JSON.parse(await file.text());
+      if (payload?.format !== 'MYTRIP_BACKUP' || payload.version !== 1 || !payload.trip?.title || !payload.trip?.startDate || !payload.trip?.endDate || !payload.data) throw new Error('지원하지 않는 백업 파일입니다.');
+      const newId = makeId(); const trip = {...payload.trip, id:newId, title:`${payload.trip.title} 가져옴`, template:false, importedAt:new Date().toISOString()}; registry.trips.push(trip);
+      for (const base of transferableBases) if (payload.data[base] !== null && payload.data[base] !== undefined) localStorage.setItem(storageKey(base, newId), JSON.stringify(payload.data[base]));
+      registry.activeId = newId; saveRegistry(); transferStatus.textContent = '가져오기가 끝났습니다. 여행을 여는 중입니다.'; location.reload();
+    } catch (error) { transferStatus.textContent = `가져오기 실패: ${error.message}`; }
+    event.target.value = '';
+  });
 })();
