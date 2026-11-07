@@ -808,6 +808,8 @@ dialog::backdrop { background: #33213d99; }
 .user-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .user-section-head h3 { margin: 0; color: var(--navy); font-size: 1rem; }
 .user-section-head p:not(.shopping-kicker) { margin: 3px 0 0; color: var(--muted); font-size: .76rem; }
+.schedule-day-summary { font-variant-numeric: tabular-nums; }
+.schedule-warning { margin: 11px 0 0; padding: 9px 11px; border-left: 3px solid var(--berry); border-radius: 5px; color: var(--berry); background: #fff0f4; font-size: .72rem; font-weight: 750; }
 .user-timeline { margin-top: 12px; }
 .user-schedule-stop::after { display: none; }
 .user-schedule-stop { margin-bottom: 4px; border: 1px solid var(--line) !important; border-radius: 9px; background: var(--card) !important; }
@@ -820,8 +822,6 @@ dialog::backdrop { background: #33213d99; }
 .schedule-empty { display: grid; justify-items: center; gap: 5px; margin: 13px 0 0; padding: 26px 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); text-align: center; }
 .schedule-empty strong { color: var(--ink); font-size: .92rem; }
 .schedule-empty span { font-size: .74rem; }
-.schedule-empty .button { margin-top: 5px; }
-.schedule-bottom-add { width: 100%; margin-top: 10px; padding: 10px; border: 1px dashed var(--lavender); border-radius: 8px; color: var(--purple); background: transparent; font-size: .78rem; font-weight: 800; cursor: pointer; }
 .reference-schedule { margin-top: 14px; border-top: 1px solid var(--line); }
 .reference-schedule > summary { padding: 12px 2px 4px; color: var(--muted); font-size: .76rem; font-weight: 800; cursor: pointer; }
 .user-timeline .is-done { opacity: .6; }
@@ -876,7 +876,6 @@ dialog::backdrop { background: #33213d99; }
 .trip-card-actions .button { font-size: .68rem; }
 .trip-delete { border: 0; color: var(--berry); background: transparent; font-size: .68rem; font-weight: 800; cursor: pointer; }
 .editor-error { min-height: 1.2em; margin: 8px 0 0; color: var(--berry); font-size: .75rem; font-weight: 800; }
-#planner { display: none; }
 .custom-trip .route-strip, .custom-trip .reference-schedule, .custom-trip .expanded-intro, .custom-trip #places > .window-body > .directory-controls, .custom-trip #place-grid, .custom-trip #more-places { display: none; }
 .custom-trip #user-schedule { margin-top: 12px; }
 @media (max-width: 760px) {

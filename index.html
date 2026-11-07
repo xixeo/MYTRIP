@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f8c7dc">
-  <meta name="description" content="11월 6~8일, 2박 3일 여행 일정과 장소 모음">
+  <meta name="description" content="여행 일정, 장소, 쇼핑리스트를 한곳에서 관리하는 MYTRIP">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="MYTRIP WEEKEND TRIP VOL.1">
+  <meta property="og:title" content="MYTRIP">
   <meta property="og:description" content="2026.11.06–08 · 선택한 여행 코스와 이동·식사 시간표">
-  <title>MYTRIP WEEKEND TRIP VOL.1</title>
+  <title>MYTRIP</title>
   <link rel="icon" href="./assets/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css?v=parking">
   <script src="./data.js?v=trip-maps" defer></script>
@@ -28,7 +28,7 @@
     <nav aria-label="페이지 이동">
       <a href="#expanded-plan">여행 일정</a>
       <a href="#shopping">쇼핑리스트</a>
-      <a href="#places">장소·메뉴</a>
+      <a href="#places">장소</a>
       <button id="trip-list-open" class="nav-trip-button" type="button">여행 목록</button>
     </nav>
   </header>
@@ -76,90 +76,15 @@
         <p class="expanded-intro">11월 6일~8일 · 차량 이동, 주차, 식사와 대기 시간을 포함했어요. 예약·예식 시각 외에는 예상이에요.</p>
         <nav id="expanded-tabs" class="day-tabs" aria-label="고른 일정 날짜"></nav>
         <section id="user-schedule" class="user-schedule" aria-labelledby="user-schedule-title">
-          <div class="user-section-head"><div><p class="shopping-kicker">MY ITINERARY</p><h3 id="user-schedule-title">내 일정</h3></div><button id="schedule-add" class="button primary" type="button">+ 일정 추가</button></div>
-          <p id="user-schedule-empty" class="schedule-empty"><strong>이 날짜에는 아직 일정이 없어요.</strong><span>장소를 검색하거나 새로 만들면서 바로 일정을 추가할 수 있어요.</span><button id="schedule-empty-add" class="button secondary" type="button">첫 일정 추가</button></p>
+          <div class="user-section-head"><div><p class="shopping-kicker">MY ITINERARY</p><h3 id="user-schedule-title">내 일정</h3><p id="schedule-day-summary" class="schedule-day-summary"></p></div><button id="schedule-add" class="button primary" type="button">+ 일정 추가</button></div>
+          <p id="schedule-warning" class="schedule-warning" hidden></p>
+          <p id="user-schedule-empty" class="schedule-empty"><strong>이 날짜에는 아직 일정이 없어요.</strong><span>위의 ‘일정 추가’에서 장소를 검색하거나 새로 만들 수 있어요.</span></p>
           <ol id="user-schedule-list" class="timeline user-timeline"></ol>
-          <button id="schedule-bottom-add" class="schedule-bottom-add" type="button">＋ 이 날짜에 일정 추가</button>
         </section>
         <details class="reference-schedule">
           <summary>추천 일정 참고하기</summary>
           <div id="expanded-panel" aria-live="polite"></div>
         </details>
-      </div>
-    </section>
-
-    <section id="planner" class="window window-blue" aria-labelledby="planner-title">
-      <header class="window-bar">
-        <span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span>
-        <h2 id="planner-title">날짜별 여행 일정</h2>
-      </header>
-      <div class="window-body">
-        <p class="planner-hint">날짜를 고르고 <strong>갈 곳을 하나씩 눌러</strong> 담아 보세요. <strong>담은 장소</strong>에서 순서를 바꾸고 저장할 수 있어요.</p>
-        <nav id="day-tabs" class="day-tabs" aria-label="여행 날짜"></nav>
-        <div class="builder-grid">
-          <section id="choose-places" class="panel choose-places" aria-labelledby="choose-places-title">
-            <div class="case-head">
-              <h3 id="choose-places-title">장소 고르기</h3>
-              <a id="trip-jump" class="case-return" href="#my-trip">담은 장소 ↓</a>
-            </div>
-            <div id="pick-types" class="chips" role="group" aria-label="담을 장소 종류"></div>
-            <div id="pick-options" class="pick-options"></div>
-          </section>
-          <section id="my-trip" class="panel my-trip" aria-labelledby="trip-title" tabindex="-1">
-            <div class="case-head"><h3 id="trip-title">내가 고른 순서</h3><span id="pick-count"></span></div>
-            <p id="empty-picks" class="trip-hint">장소를 누른 순서대로 여기에 담겨요.</p>
-            <ol id="trip-picks" class="trip-picks"></ol>
-            <div class="trip-actions">
-              <button id="save-trip" class="button primary" type="button" disabled>내 코스 저장</button>
-              <button id="load-trip" class="button secondary" type="button" hidden>저장한 코스 불러오기</button>
-            </div>
-            <p class="trip-hint">금·토·일의 장소와 방문 순서가 이 브라우저에 저장돼요.</p>
-            <p id="trip-status" class="trip-hint" role="status"></p>
-          </section>
-        </div>
-        <details id="friday-departure" class="departure-note" hidden>
-          <summary>금요일 합류 전 일정 <span class="departure-badge">서면역 12:45 출발</span></summary>
-          <dl class="repair-steps">
-            <div><dt>10:00</dt><dd><strong>개인 일정</strong><small>출발 전 일정</small></dd></div>
-            <div><dt>10:55–11:00</dt><dd><strong>차량으로 먼저 출발</strong><small>서면·전포 → 차량 인수 장소</small></dd></div>
-            <div><dt>11:30</dt><dd><strong>차량 오디오 수리</strong> <span class="status-badge">예약 희망</span><small>12:00 수리 완료 예상</small></dd></div>
-            <div><dt>12:30–12:35</dt><dd><strong>서면역 복귀</strong><small>일행과 합류</small></dd></div>
-            <div><dt>12:45</dt><dd><strong>서면역에서 둘이 출발</strong></dd></div>
-          </dl>
-          <table class="arrival-table" aria-label="서면역 출발 기준 영천과 언양 도착 예상">
-            <thead><tr><th scope="col">서면역 출발</th><th scope="col">영천 도착 예상</th><th scope="col">언양 도착 예상</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">12:45</th><td><strong>14:05–14:20</strong></td><td><strong>13:30–13:45</strong></td></tr>
-            </tbody>
-          </table>
-          <p>오빠차까지 편도 30분, 수리 30분 기준이야. 11:30 작업 가능 여부는 예약할 때 확인해.</p>
-        </details>
-        <details class="course-examples">
-          <summary>코스 예시와 시간표 보기</summary>
-          <div id="course-tabs" class="course-tabs" hidden></div>
-          <details id="stop-picker" class="stop-picker" hidden>
-            <summary>들를 곳으로 코스 찾기 <span id="stop-count"></span></summary>
-            <p class="trip-hint">고른 곳을 모두 포함하는 예시가 보여요.</p>
-            <div id="stop-types" class="chips" role="group" aria-label="예시 장소 종류"></div>
-            <div id="stop-options" class="chips" role="group" aria-label="예시에 포함할 장소"></div>
-            <p id="stop-selection" class="trip-hint" role="status"></p>
-            <button id="clear-stops" class="button secondary" type="button" hidden>장소 선택 초기화</button>
-          </details>
-          <div class="planner-grid">
-            <aside id="case-panel" class="panel case-box" aria-label="코스 예시 선택" tabindex="-1"></aside>
-            <div id="day-panel" class="itinerary" aria-live="polite" tabindex="-1"></div>
-            <aside id="guide-panel" class="panel guide-box" aria-label="일정 참고"></aside>
-          </div>
-        </details>
-        <details class="confirmed">
-          <summary>예약·확정 일정</summary>
-          <ul class="anchor-grid">
-            <li><span class="anchor-date">11.06 금</span><p><b>12:45 서면역에서 둘이 출발</b><small>11:30 오빠차 수리 예약 희망 · 오창 레스트호텔 예약</small></p></li>
-            <li><span class="anchor-date">11.07 토</span><p><b>11:00 현지결혼식</b><small>광혜원면 사랑의교회 · 대전 호텔 16:00 입실</small></p></li>
-            <li><span class="anchor-date">11.08 일</span><p><b>12:00 누리손만두 예약</b><small>성심당 대기 확인 후 대구 이동</small></p></li>
-          </ul>
-        </details>
-        <noscript><p class="notice">날짜와 코스를 고르려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
       </div>
     </section>
 
@@ -264,13 +189,15 @@
         <select id="schedule-place" hidden aria-label="선택한 장소"></select>
       </div>
       <div class="editor-grid schedule-details">
-        <label><span>날짜</span><select id="schedule-day"><option value="fri">11월 6일 금요일</option><option value="sat">11월 7일 토요일</option><option value="sun">11월 8일 일요일</option></select></label>
+        <label><span>날짜</span><select id="schedule-day"></select></label>
         <label><span>시작 시간</span><input id="schedule-time" type="time" required value="10:00"></label>
         <label><span>체류시간(분)</span><input id="schedule-duration" type="number" min="0" max="1440" step="10" value="60"></label>
+        <label class="schedule-travel-field"><span>이전 장소에서 이동</span><select id="schedule-travel-mode"><option value="">미확인</option><option>도보</option><option>대중교통</option><option>차량</option><option>택시</option><option>자전거</option><option>기타</option></select></label>
+        <label class="schedule-travel-field"><span>이동시간(분)</span><input id="schedule-travel-minutes" type="number" min="0" max="1440" step="5" value="0"></label>
         <label class="editor-check"><input id="schedule-fixed" type="checkbox"><span>예약 등 고정 일정</span></label>
         <label class="editor-wide"><span>일정 메모</span><textarea id="schedule-note" rows="2" maxlength="300" placeholder="예약 시각, 주문 마감, 이동 메모"></textarea></label>
       </div>
-      <div class="editor-actions"><button id="schedule-delete" class="button danger" type="button" hidden>일정 삭제</button><button class="button secondary" type="button" data-close-schedule-editor>취소</button><button class="button primary" type="submit">저장</button></div>
+      <div class="editor-actions"><button id="schedule-delete" class="button danger" type="button" hidden>일정 삭제</button><button id="schedule-duplicate" class="button secondary" type="button" hidden>일정 복제</button><button class="button secondary" type="button" data-close-schedule-editor>취소</button><button class="button primary" type="submit">저장</button></div>
     </form>
   </dialog>
   <dialog id="trip-list-dialog" class="editor-dialog" aria-labelledby="trip-list-title">
@@ -285,7 +212,7 @@
       <button class="dialog-close" id="trip-editor-close" type="button" aria-label="여행 편집 닫기">×</button>
       <p class="shopping-kicker">TRIP</p><h2 id="trip-editor-title">새 여행 만들기</h2>
       <div class="editor-grid">
-        <label class="editor-wide"><span>여행 제목 *</span><input id="trip-title" required maxlength="80" placeholder="예: 도쿄 가을 여행"></label>
+        <label class="editor-wide"><span>여행 제목 *</span><input id="trip-name" required maxlength="80" placeholder="예: 도쿄 가을 여행"></label>
         <label><span>목적지 *</span><input id="trip-destination" required maxlength="80" placeholder="예: 도쿄"></label>
         <label><span>국가 *</span><input id="trip-country" required maxlength="40" placeholder="예: 일본"></label>
         <label><span>시작일 *</span><input id="trip-start-date" required type="date"></label>

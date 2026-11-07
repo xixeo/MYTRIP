@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  if (!window.MYTRIP_ACTIVE_TRIP?.template) return;
 
   const {venues, friday, saturday, guides, backup} = window.TRIP;
   const parking = window.TRIP_PARKING || {};
@@ -648,8 +649,5 @@
   });
 
   renderExpanded();
-  renderBuilder();
-  renderPlan();
   renderDirectory();
-  if (hasPicks(savedTrip)) $('#trip-status').textContent = '저장한 코스의 장소를 불러왔어요.';
 })();

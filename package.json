@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "start": "serve -l 4173 .",
-    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check trip-manager.js && node --check shopping.js && node --check planner-editor.js && node scripts/validate-shopping-content.js && node scripts/validate-planner-markup.js && node scripts/validate-trip-markup.js"
+    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check trip-manager.js && node --check shopping.js && node --check planner-editor.js && node scripts/validate-shopping-content.js && node scripts/validate-planner-markup.js && node scripts/validate-trip-markup.js",
+    "test:e2e": "node scripts/e2e-flow.js"
   },
-  "devDependencies": { "serve": "^14.2.5" }
+  "devDependencies": {
+    "playwright-core": "^1.65.0",
+    "serve": "^14.2.5"
+  }
 }

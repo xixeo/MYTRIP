@@ -16,7 +16,7 @@
     const saved = JSON.parse(localStorage.getItem(storageKey) || legacy || 'null');
     if (saved?.places && saved?.schedule) state = saved;
   } catch (_) { state = {places:[], schedule:[]}; }
-  state.schedule = state.schedule.map((item, index) => ({order:index, ...item}));
+  state.schedule = state.schedule.map((item, index) => ({order:index, travelMode:'', travelMinutes:0, ...item}));
 
   const placeDialog = $('#place-editor-dialog');
   const scheduleDialog = $('#schedule-editor-dialog');
@@ -82,8 +82,17 @@
   function renderSchedule() {
     const schedule = state.schedule.filter(item => item.day === activeDay).sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.time.localeCompare(b.time));
     $('#user-schedule-title').textContent = `${dayLabels[activeDay]} 일정`;
+    const totalMinutes = schedule.reduce((sum, item, index) => sum + (Number(item.duration) || 0) + (index ? Number(item.travelMinutes) || 0 : 0), 0);
+    $('#schedule-day-summary').textContent = schedule.length ? `${schedule.length}곳 · 체류·이동 약 ${Math.floor(totalMinutes / 60)}시간 ${totalMinutes % 60}분` : '';
+    const warnings = [];
+    schedule.forEach((item, index) => {
+      const next = schedule[index + 1]; if (!next) return;
+      const [hour, minute] = item.time.split(':').map(Number); const [nextHour, nextMinute] = next.time.split(':').map(Number);
+      const readyAt = hour * 60 + minute + (Number(item.duration) || 0) + (Number(next.travelMinutes) || 0); const nextAt = nextHour * 60 + nextMinute;
+      if (Number.isFinite(readyAt) && Number.isFinite(nextAt) && nextAt < readyAt) warnings.push(`${item.time} ${resolvedPlace(item.placeId)?.name || '일정'} 이후 ${readyAt - nextAt}분이 부족해요.`);
+    });
+    $('#schedule-warning').hidden = warnings.length === 0; $('#schedule-warning').textContent = warnings.join(' ');
     $('#user-schedule-empty').hidden = schedule.length > 0;
-    $('#schedule-bottom-add').hidden = schedule.length === 0;
     $('#user-schedule-list').replaceChildren(...schedule.map((item, index) => {
       const place = resolvedPlace(item.placeId) || {name:'삭제된 장소', area:'', address:''};
       const row = document.createElement('li'); if (item.status !== 'planned') row.className = `is-${item.status}`;
@@ -95,7 +104,7 @@
       const actions = document.createElement('div'); actions.className = 'user-schedule-actions';
       actions.append(makeButton('↑', 'mini-action order-action', () => moveSchedule(item.id, -1), index === 0), makeButton('↓', 'mini-action order-action', () => moveSchedule(item.id, 1), index === schedule.length - 1), makeButton(item.status === 'done' ? '완료 취소' : '✓ 완료', 'mini-action', () => setScheduleStatus(item.id, item.status === 'done' ? 'planned' : 'done')), makeButton(item.status === 'skipped' ? '건너뜀 취소' : '건너뜀', 'mini-action', () => setScheduleStatus(item.id, item.status === 'skipped' ? 'planned' : 'skipped')), makeButton('편집', 'mini-action edit-action', () => openScheduleEditor(item.id)));
       body.append(title, meta, note, actions); row.append(time, body);
-      if (index < schedule.length - 1) { const travel = document.createElement('span'); travel.className = 'travel-gap'; travel.textContent = '이동 시간·수단 미확인'; row.append(travel); }
+      if (index < schedule.length - 1) { const next = schedule[index + 1]; const travel = document.createElement('span'); travel.className = 'travel-gap'; travel.textContent = next.travelMode && next.travelMinutes ? `${next.travelMode} · 약 ${next.travelMinutes}분` : next.travelMode ? `${next.travelMode} · 이동시간 미확인` : next.travelMinutes ? `이동수단 미확인 · 약 ${next.travelMinutes}분` : '이동 시간·수단 미확인'; row.append(travel); }
       return row;
     }));
   }
@@ -140,9 +149,14 @@
   }
   function openScheduleEditor(scheduleId = null, placeId = null) {
     editingScheduleId = scheduleId; const item = state.schedule.find(candidate => candidate.id === scheduleId);
-    $('#schedule-editor-title').textContent = item ? '일정 수정' : '일정에 장소 추가'; $('#schedule-delete').hidden = !item;
-    setValue('#schedule-place-search', ''); const selectedPlace = placeId || item?.placeId || ''; renderPlaceOptions(selectedPlace); selectSchedulePlace(selectedPlace); const daySelect = $('#schedule-day'); daySelect.replaceChildren(...tripDays.map(day => { const option = document.createElement('option'); option.value = day.value; option.textContent = day.label; return option; })); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note);
+    $('#schedule-editor-title').textContent = item ? '일정 수정' : '일정에 장소 추가'; $('#schedule-delete').hidden = !item; $('#schedule-duplicate').hidden = !item;
+    setValue('#schedule-place-search', ''); const selectedPlace = placeId || item?.placeId || ''; renderPlaceOptions(selectedPlace); selectSchedulePlace(selectedPlace); const daySelect = $('#schedule-day'); daySelect.replaceChildren(...tripDays.map(day => { const option = document.createElement('option'); option.value = day.value; option.textContent = day.label; return option; })); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); setValue('#schedule-travel-mode', item?.travelMode || ''); setValue('#schedule-travel-minutes', String(item?.travelMinutes ?? 0)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note); updateTravelFields(item);
     scheduleDialog.showModal();
+  }
+  function updateTravelFields(item = state.schedule.find(candidate => candidate.id === editingScheduleId)) {
+    const day = value('#schedule-day'); const ordered = state.schedule.filter(candidate => candidate.day === day).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); const hasPrevious = item ? ordered.findIndex(candidate => candidate.id === item.id) > 0 : ordered.length > 0;
+    document.querySelectorAll('.schedule-travel-field').forEach(field => { field.hidden = !hasPrevious; });
+    if (!hasPrevious) { setValue('#schedule-travel-mode', ''); setValue('#schedule-travel-minutes', '0'); }
   }
   function setScheduleStatus(scheduleId, status) { const item = state.schedule.find(candidate => candidate.id === scheduleId); if (item) item.status = status; save(); renderSchedule(); }
   function moveSchedule(scheduleId, direction) {
@@ -162,15 +176,21 @@
   });
   $('#schedule-editor-form').addEventListener('submit', event => {
     event.preventDefault(); const placeId = value('#schedule-place'); if (!placeId) { $('#schedule-selected-place').textContent = '장소를 먼저 선택해 주세요.'; $('#schedule-selected-place').classList.add('is-error'); return; } $('#schedule-selected-place').classList.remove('is-error');
-    const input = {placeId, day:value('#schedule-day'), time:value('#schedule-time'), duration:Math.max(0, Number(value('#schedule-duration')) || 0), fixed:$('#schedule-fixed').checked, note:value('#schedule-note'), status:'planned', updatedAt:new Date().toISOString()};
+    const input = {placeId, day:value('#schedule-day'), time:value('#schedule-time'), duration:Math.max(0, Number(value('#schedule-duration')) || 0), travelMode:value('#schedule-travel-mode'), travelMinutes:Math.max(0, Number(value('#schedule-travel-minutes')) || 0), fixed:$('#schedule-fixed').checked, note:value('#schedule-note'), status:'planned', updatedAt:new Date().toISOString()};
     if (editingScheduleId) state.schedule = state.schedule.map(item => item.id === editingScheduleId ? {...item, ...input, status:item.status} : item);
     else { const nextOrder = Math.max(-1, ...state.schedule.filter(item => item.day === input.day).map(item => item.order ?? 0)) + 1; state.schedule.push({id:id('schedule'), order:nextOrder, ...input}); }
     activeDay = input.day; save(); scheduleDialog.close(); renderSchedule();
   });
   $('#place-delete').addEventListener('click', () => { if (!editingPlaceId || !confirm('이 장소와 연결된 내 일정을 모두 삭제할까요?')) return; state.places = state.places.filter(place => place.id !== editingPlaceId); state.schedule = state.schedule.filter(item => item.placeId !== editingPlaceId); save(); placeDialog.close(); renderPlaces(); renderSchedule(); });
   $('#schedule-delete').addEventListener('click', () => { if (!editingScheduleId || !confirm('이 일정을 삭제할까요?')) return; state.schedule = state.schedule.filter(item => item.id !== editingScheduleId); save(); scheduleDialog.close(); renderSchedule(); });
-  $('#place-add').addEventListener('click', () => openPlaceEditor()); $('#schedule-add').addEventListener('click', () => openScheduleEditor()); $('#schedule-empty-add').addEventListener('click', () => openScheduleEditor()); $('#schedule-bottom-add').addEventListener('click', () => openScheduleEditor());
+  $('#schedule-duplicate').addEventListener('click', () => {
+    const source = state.schedule.find(item => item.id === editingScheduleId); if (!source) return;
+    state.schedule.filter(item => item.day === source.day && (item.order ?? 0) > (source.order ?? 0)).forEach(item => { item.order += 1; });
+    const copy = {...source, id:id('schedule'), order:(source.order ?? 0) + 1, status:'planned', fixed:false, note:source.note ? `${source.note} · 복제` : '복제한 일정', updatedAt:new Date().toISOString()}; state.schedule.push(copy); save(); scheduleDialog.close(); renderSchedule(); openScheduleEditor(copy.id);
+  });
+  $('#place-add').addEventListener('click', () => openPlaceEditor()); $('#schedule-add').addEventListener('click', () => openScheduleEditor());
   $('#schedule-place-search').addEventListener('input', event => renderPlacePicker(event.target.value));
+  $('#schedule-day').addEventListener('change', () => updateTravelFields());
   $('#schedule-new-place').addEventListener('click', () => { resumeScheduleAfterPlace = true; resumeScheduleId = editingScheduleId; scheduleDialog.close(); openPlaceEditor(); });
   document.querySelectorAll('[data-close-place-editor]').forEach(button => button.addEventListener('click', () => { placeDialog.close(); if (resumeScheduleAfterPlace) { const scheduleId = resumeScheduleId; resumeScheduleAfterPlace = false; resumeScheduleId = null; openScheduleEditor(scheduleId); } }));
   document.querySelectorAll('[data-close-schedule-editor]').forEach(button => button.addEventListener('click', () => scheduleDialog.close()));

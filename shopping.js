@@ -46,7 +46,7 @@
     if (!targets.length) { renderExchangeStatus(); return; }
     exchangeLoading = true; exchangeError = ''; renderExchangeStatus();
     const results = await Promise.allSettled(targets.map(async currency => {
-      const response = await fetch(`https://api.frankfurter.app/latest?base=${encodeURIComponent(currency)}&symbols=KRW`);
+      const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(currency)}&symbols=KRW`);
       if (!response.ok) throw new Error(`${currency} 환율 HTTP ${response.status}`);
       const data = await response.json(); const rate = Number(data.rates?.KRW);
       if (!Number.isFinite(rate)) throw new Error(`${currency} 환율 없음`);

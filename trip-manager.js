@@ -45,6 +45,8 @@
     document.body.classList.toggle('custom-trip', !activeTrip.template);
     document.documentElement.dataset.tripId = activeTrip.id;
     document.title = `${activeTrip.title} | MYTRIP`;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', `${activeTrip.title} · ${activeTrip.destination} 여행 일정과 쇼핑리스트`);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${activeTrip.title} | MYTRIP`);
     document.querySelector('#hero-destination').textContent = activeTrip.destination;
     document.querySelector('#hero-trip-title').textContent = activeTrip.title;
     document.querySelector('#hero-date').textContent = formatRange(activeTrip);
@@ -89,8 +91,8 @@
   function openEditor(tripId = null) {
     editingId = tripId; const trip = registry.trips.find(item => item.id === tripId);
     document.querySelector('#trip-editor-title').textContent = trip ? '여행 정보 수정' : '새 여행 만들기';
-    setInput('#trip-title', trip?.title); setInput('#trip-destination', trip?.destination); setInput('#trip-country', trip?.country); setInput('#trip-start-date', trip?.startDate || new Date().toISOString().slice(0, 10)); setInput('#trip-end-date', trip?.endDate || new Date().toISOString().slice(0, 10)); document.querySelector('#trip-editor-error').textContent = '';
-    listDialog.close(); editorDialog.showModal(); setTimeout(() => document.querySelector('#trip-title').focus(), 0);
+    setInput('#trip-name', trip?.title); setInput('#trip-destination', trip?.destination); setInput('#trip-country', trip?.country); setInput('#trip-start-date', trip?.startDate || isoFromDate(new Date())); setInput('#trip-end-date', trip?.endDate || isoFromDate(new Date())); document.querySelector('#trip-editor-error').textContent = '';
+    listDialog.close(); editorDialog.showModal(); setTimeout(() => document.querySelector('#trip-name').focus(), 0);
   }
   function duplicateTrip(tripId) {
     const source = registry.trips.find(trip => trip.id === tripId); const newId = makeId();
@@ -105,7 +107,7 @@
   document.querySelector('#trip-editor-form').addEventListener('submit', event => {
     event.preventDefault(); const startDate = document.querySelector('#trip-start-date').value; const endDate = document.querySelector('#trip-end-date').value;
     if (endDate < startDate) { document.querySelector('#trip-editor-error').textContent = '종료일은 시작일보다 빠를 수 없습니다.'; return; }
-    const input = {title:document.querySelector('#trip-title').value.trim(), destination:document.querySelector('#trip-destination').value.trim(), country:document.querySelector('#trip-country').value.trim(), startDate, endDate, updatedAt:new Date().toISOString()};
+    const input = {title:document.querySelector('#trip-name').value.trim(), destination:document.querySelector('#trip-destination').value.trim(), country:document.querySelector('#trip-country').value.trim(), startDate, endDate, updatedAt:new Date().toISOString()};
     if (editingId) registry.trips = registry.trips.map(trip => trip.id === editingId ? {...trip, ...input} : trip);
     else { const trip = {id:makeId(), ...input, template:false, createdAt:new Date().toISOString()}; registry.trips.push(trip); registry.activeId = trip.id; }
     saveRegistry(); editorDialog.close(); location.reload();
