@@ -30,6 +30,7 @@
   const saveRates = () => localStorage.setItem(exchangeStorageKey, JSON.stringify(exchangeRates));
   const make = (tag, className, text) => { const element = document.createElement(tag); if (className) element.className = className; if (text !== undefined) element.textContent = text; return element; };
   const imageFallback = item => { const fallback=make('span','shopping-thumb-placeholder',item.category === '먹거리' ? '🍴' : item.category === '생활용품' ? '🧴' : '🛍'); fallback.setAttribute('role','img'); fallback.setAttribute('aria-label','상품 사진 미등록'); return fallback; };
+  async function resizedImage(input) { const file=input?.files?.[0];if(!file)return'';if(file.size>8*1024*1024)throw new Error('사진은 8MB 이하만 등록할 수 있어요.');const url=URL.createObjectURL(file);try{const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});const scale=Math.min(1,640/Math.max(image.naturalWidth,image.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.78);}finally{URL.revokeObjectURL(url);} }
   const sameItem = candidate => items.some(item => !item.done && item.name === candidate.name && item.store === candidate.store);
   function addItem(input) {
     const existing = items.find(item => !item.done && item.name === input.name && item.store === input.store);
@@ -95,13 +96,14 @@
       if (item.imageUrl) { const img=document.createElement('img'); img.src=item.imageUrl; img.alt=`${item.name} 상품 사진`; img.loading='lazy'; img.addEventListener('error',()=>img.replaceWith(imageFallback(item))); thumb.append(img); } else thumb.append(imageFallback(item));
       const check = make('button', 'shopping-check', item.done ? '✓' : ''); check.type = 'button'; check.setAttribute('aria-label', `${item.name} ${item.done ? '구매 취소' : '구매 완료'}`);
       check.addEventListener('click', () => { item.done = !item.done; save(); render(); });
-      const copy = make('div', 'shopping-copy'); const title = make('div', 'shopping-item-title'); title.append(make('span', 'shopping-category', item.category || '기타'), make('strong', '', item.name)); copy.append(title);
+      const copy = make('div', 'shopping-copy'); const title = make('div', 'shopping-item-title'); title.append(make('span', 'shopping-category', item.sheetCategory || item.category || '기타'), make('strong', '', item.name)); copy.append(title); if(item.localName)copy.append(make('small','shopping-local-name',item.localName));
       const currency = item.currency || 'KRW'; const subtotal = (Number(item.price) || 0) * item.quantity; const converted = convertedWon(item);
       copy.append(make('span', '', [item.store, `${item.quantity}개`].filter(Boolean).join(' · ')));
-      copy.append(make('small','shopping-local-price',item.price ? `현지 가격 · ${money(subtotal,currency)}` : '현지 가격 · 미입력'));
+      copy.append(make('small','shopping-local-price',item.price ? `현지 가격 · ${item.priceText || money(subtotal,currency)}` : `현지 가격 · ${item.priceText || '미입력'}`));
       if (currency !== 'KRW' && item.price) copy.append(make('small', 'shopping-conversion', converted === null ? '한국 가격 · 환산 중…' : `한국 가격 · 현재 기준 약 ${won(Math.round(converted))}`));
       else if (currency === 'KRW' && item.price) copy.append(make('small','shopping-conversion',`한국 가격 · ${won(subtotal)}`));
       if (item.note) copy.append(make('small', '', item.note));
+      if(item.sourceUrl){const source=make('a','shopping-source','공식 정보 ↗');source.href=item.sourceUrl;source.target='_top';source.rel='noreferrer';copy.append(source);}
       const edit = make('button','shopping-edit','수정'); edit.type='button'; edit.addEventListener('click',()=>openEditor(item.id));
       const remove = make('button', 'shopping-remove', '삭제'); remove.type = 'button'; remove.addEventListener('click', () => { items = items.filter(candidate => candidate.id !== item.id); save(); render(); });
       const actions=make('div','shopping-item-actions'); actions.append(edit,remove); row.append(thumb,check,copy,actions); list.append(row);
@@ -116,9 +118,10 @@
     $('#shopping-list-more').hidden = visibleItems.length <= listLimit; $('#shopping-list-more').textContent = `더 보기 (${visibleItems.length - listLimit}개)`;
     renderRecommendations(); renderExchangeStatus(); if (!skipRateRequest) requestRates();
   }
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault(); const name = $('#shopping-name').value.trim(); if (!name) return;
-    addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), imageUrl:$('#shopping-image').value.trim(), note:$('#shopping-note').value.trim(), done:false});
+    let imageUrl=$('#shopping-image').value.trim();try{imageUrl=await resizedImage($('#shopping-image-file')) || imageUrl;}catch(error){alert(error.message);return;}
+    addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), imageUrl, note:$('#shopping-note').value.trim(), done:false});
     form.reset(); $('#shopping-quantity').value = '1'; $('#shopping-currency').value = defaultCurrency; $('#shopping-name').focus();
   });
   $('#shopping-clear-complete').addEventListener('click', () => { items = items.filter(item => !item.done); save(); render(); });
@@ -126,8 +129,8 @@
   $('#shopping-list-status').addEventListener('change', () => { listLimit = 12; render(true); });
   $('#shopping-list-more').addEventListener('click', () => { listLimit += 12; render(true); });
   const editorDialog=$('#shopping-editor-dialog');
-  function openEditor(itemId) { const item=items.find(candidate=>candidate.id===itemId); if(!item)return; editingItemId=itemId; $('#shopping-edit-name').value=item.name; $('#shopping-edit-store').value=item.store || ''; $('#shopping-edit-category').value=item.category || '기타'; $('#shopping-edit-currency').value=item.currency || defaultCurrency; $('#shopping-edit-quantity').value=String(item.quantity || 1); $('#shopping-edit-price').value=String(item.price || 0); $('#shopping-edit-image').value=item.imageUrl || ''; $('#shopping-edit-note').value=item.note || ''; editorDialog.showModal(); }
-  $('#shopping-editor-form').addEventListener('submit',event=>{ event.preventDefault(); const item=items.find(candidate=>candidate.id===editingItemId); if(!item)return; Object.assign(item,{name:$('#shopping-edit-name').value.trim(),store:$('#shopping-edit-store').value.trim(),category:$('#shopping-edit-category').value,currency:$('#shopping-edit-currency').value,quantity:Math.max(1,Number($('#shopping-edit-quantity').value)||1),price:Math.max(0,Number($('#shopping-edit-price').value)||0),imageUrl:$('#shopping-edit-image').value.trim(),note:$('#shopping-edit-note').value.trim()}); save(); editorDialog.close(); render(); });
+  function openEditor(itemId) { const item=items.find(candidate=>candidate.id===itemId); if(!item)return; editingItemId=itemId; $('#shopping-edit-name').value=item.name; $('#shopping-edit-store').value=item.store || ''; $('#shopping-edit-category').value=item.category || '기타'; $('#shopping-edit-currency').value=item.currency || defaultCurrency; $('#shopping-edit-quantity').value=String(item.quantity || 1); $('#shopping-edit-price').value=String(item.price || 0); $('#shopping-edit-image').value=/^https?:\/\//.test(item.imageUrl || '') ? item.imageUrl : ''; $('#shopping-edit-image-file').value=''; $('#shopping-edit-remove-image').checked=false; $('#shopping-edit-note').value=item.note || ''; editorDialog.showModal(); }
+  $('#shopping-editor-form').addEventListener('submit',async event=>{ event.preventDefault(); const item=items.find(candidate=>candidate.id===editingItemId); if(!item)return;let imageUrl=$('#shopping-edit-remove-image').checked ? '' : item.imageUrl || '';const enteredUrl=$('#shopping-edit-image').value.trim();if(enteredUrl)imageUrl=enteredUrl;try{imageUrl=await resizedImage($('#shopping-edit-image-file')) || imageUrl;}catch(error){alert(error.message);return;} Object.assign(item,{name:$('#shopping-edit-name').value.trim(),store:$('#shopping-edit-store').value.trim(),category:$('#shopping-edit-category').value,currency:$('#shopping-edit-currency').value,quantity:Math.max(1,Number($('#shopping-edit-quantity').value)||1),price:Math.max(0,Number($('#shopping-edit-price').value)||0),priceText:'',imageUrl,note:$('#shopping-edit-note').value.trim()}); save(); editorDialog.close(); render(); });
   document.querySelectorAll('[data-close-shopping-editor]').forEach(button=>button.addEventListener('click',()=>editorDialog.close()));
   $('#exchange-refresh').addEventListener('click', () => requestRates(true));
   window.addEventListener('mytrip:add-shopping', event => { if (event.detail) { addItem(event.detail); document.querySelector('#shopping')?.scrollIntoView({behavior:'smooth'}); } });

@@ -821,6 +821,8 @@ dialog::backdrop { background: #33213d99; }
 .shopping-copy small { margin-top: 4px; color: var(--muted); font-size: .7rem; }
 .shopping-copy .shopping-conversion { color: var(--navy); font-weight: 800; }
 .shopping-copy .shopping-local-price { color: var(--ink); font-weight: 800; }
+.shopping-local-name { color: var(--navy) !important; }
+.shopping-source { justify-self: start; margin-top: 4px; color: var(--purple); font-size: .68rem; font-weight: 800; text-decoration: underline; }
 .shopping-item-actions { display: grid; flex: none; gap: 7px; justify-items: end; }
 .shopping-edit { border: 0; color: var(--purple); background: transparent; font-size: .72rem; font-weight: 800; }
 .shopping-item.is-done .shopping-copy { opacity: .58; text-decoration: line-through; }

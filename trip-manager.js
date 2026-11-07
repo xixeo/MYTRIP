@@ -32,6 +32,11 @@
       localStorage.setItem(sheetV2Marker, '1');
     } catch (_) { /* 기존 사용자 데이터가 손상된 경우 임의로 덮어쓰지 않는다. */ }
   }
+  const shoppingSheetMarker='mytrip-hokkaido-shopping-sheet-v1';
+  if(Array.isArray(window.MYTRIP_HOKKAIDO_SHOPPING_V1) && !localStorage.getItem(shoppingSheetMarker)){
+    const key='weekend-trip-shopping-v2:hokkaido-2026-11';let existing=[];try{existing=JSON.parse(localStorage.getItem(key)||'[]')}catch(_){}
+    const byName=new Map(existing.map(item=>[item.name,item]));const imported=window.MYTRIP_HOKKAIDO_SHOPPING_V1.map(item=>{const old=byName.get(item.name);return old ? {...item,...old,id:item.id,localName:item.localName,sheetCategory:item.sheetCategory,sourceUrl:item.sourceUrl,sourceRow:item.sourceRow,imageUrl:old.imageUrl || item.imageUrl} : item;});localStorage.setItem(key,JSON.stringify(imported));localStorage.setItem(shoppingSheetMarker,'1');
+  }
   if (!registry.trips.some(trip => trip.id === registry.activeId)) registry.activeId = registry.trips[0].id;
   const activeTrip = registry.trips.find(trip => trip.id === registry.activeId);
   const storageKey = (base, tripId = registry.activeId) => `${base}:${tripId}`;
