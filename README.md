@@ -38,3 +38,7 @@ npm start
 - 여행을 선택하면 해당 여행의 장소·일정·쇼핑리스트만 불러옵니다.
 - 여행 정보 수정, 복제, 삭제를 지원합니다.
 - 새 여행은 기존 예시 일정이 섞이지 않은 빈 상태로 시작합니다.
+
+## Supabase 준비
+
+클라우드 동기화를 연결할 때는 Supabase Dashboard의 **SQL Editor**에서 [`supabase/schema.sql`](./supabase/schema.sql)을 한 번 실행합니다. 이 스키마는 로그인한 사용자가 자신의 여행 스냅샷만 읽고 수정하도록 RLS를 적용합니다. 브라우저에는 publishable key만 사용하며 Secret 또는 `service_role` 키를 넣지 않습니다.
