@@ -5,12 +5,16 @@ const {chromium} = require('playwright-core');
   const page = await browser.newPage({viewport:{width:390,height:844}});
   page.setDefaultTimeout(8000);
   let cloudSaved = null;
+  let loginRequestUrl = '';
+  let resolveCloudSave;
+  const cloudSavePromise = new Promise(resolve => { resolveCloudSave = resolve; });
   page.on('pageerror', error => console.error('PAGE ERROR', error));
   await page.route(/api\.frankfurter\.dev\/v1\/latest/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({amount:1, base:'JPY', date:'2026-11-06', rates:{KRW:8.4863}})}));
   await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/rest\/v1\/mytrip_snapshots/, async route => {
-    if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); return route.fulfill({status:201, contentType:'application/json', body:''}); }
+    if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); resolveCloudSave(); return route.fulfill({status:201, contentType:'application/json', body:''}); }
     return route.fulfill({status:200, contentType:'application/json', body:'[]'});
   });
+  await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/auth\/v1\/otp/, route => { loginRequestUrl = route.request().url(); return route.fulfill({status:200, contentType:'application/json', body:'{}'}); });
   const step = name => console.log(`STEP ${name}`);
   step('open');
   await page.goto('http://127.0.0.1:4173/', {waitUntil:'domcontentloaded'});
@@ -85,12 +89,22 @@ const {chromium} = require('playwright-core');
   const backup = JSON.parse(await require('fs').promises.readFile(await download.path(), 'utf8'));
   if (backup.format !== 'MYTRIP_BACKUP' || backup.data['mytrip-travel-info-v1'].reservations[0].number !== 'TEST-1234') throw new Error('백업에 예약 정보가 없습니다.');
   await page.click('#cloud-upload');
-  await page.waitForFunction(() => document.querySelector('#cloud-status')?.textContent.includes('완료'));
+  await cloudSavePromise;
   if (cloudSaved?.title !== '도쿄 테스트 여행' || cloudSaved?.payload?.data?.['mytrip-travel-info-v1']?.reservations?.[0]?.number !== 'TEST-1234') throw new Error('클라우드 저장 데이터가 올바르지 않습니다.');
+  await page.click('#trip-list-close');
+
+  step('email login redirect');
+  await page.evaluate(() => localStorage.removeItem('mytrip-supabase-session-v1'));
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.click('#trip-list-open');
+  await page.fill('#cloud-email', 'traveler@example.com');
+  await page.click('#cloud-login-form button[type="submit"]');
+  await page.waitForFunction(() => document.querySelector('#cloud-status')?.textContent.includes('로그인 링크를 보냈습니다'));
+  if (!loginRequestUrl.includes('redirect_to=')) throw new Error('로그인 복귀 주소가 OTP 요청에 없습니다.');
   await page.click('#trip-list-close');
 
   await page.screenshot({path:'/tmp/mytrip-flow-mobile.png', fullPage:true});
   step('done');
-  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), reservation:await page.textContent('#reservation-list'), checklist:await page.textContent('#checklist-progress'), backup:backup.format, cloud:cloudSaved?.title, screenshot:'/tmp/mytrip-flow-mobile.png'}));
+  console.log(JSON.stringify({title:await page.textContent('#hero-trip-title'), schedule:await page.textContent('#schedule-day-summary'), shopping:await page.textContent('#shopping-list'), reservation:await page.textContent('#reservation-list'), checklist:await page.textContent('#checklist-progress'), backup:backup.format, cloud:cloudSaved?.title, loginRedirect:true, screenshot:'/tmp/mytrip-flow-mobile.png'}));
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });

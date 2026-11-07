@@ -919,7 +919,7 @@ dialog::backdrop { background: #33213d99; }
   .cloud-login-form { grid-template-columns: 1fr; }
   .cloud-trip-card { align-items: flex-start; flex-direction: column; }
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .shopping-section-head { display: grid; align-items: start; }
   .shopping-recommend-list { grid-template-columns: 1fr; }
   .shopping-form { grid-template-columns: 1fr 1fr; }

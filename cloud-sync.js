@@ -61,8 +61,9 @@
       const snapshot = currentSnapshot();
       const userId = session.user?.id || tokenUserId(session.access_token); if (!userId) throw new Error('로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
       await api('/rest/v1/mytrip_snapshots?on_conflict=user_id,trip_id', {method:'POST', headers:{...authHeaders(), Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({user_id:userId, trip_id:snapshot.trip.id, title:snapshot.trip.title, payload:snapshot, client_updated_at:new Date().toISOString()})});
-      status('클라우드 저장이 완료됐습니다.'); await loadCloudTrips();
-    } catch (error) { status(`저장 실패: ${error.message}`); } finally { busy = false; }
+      status('클라우드 저장이 완료됐습니다.');
+    } catch (error) { status(`저장 실패: ${error.message}`); return; } finally { busy = false; }
+    await loadCloudTrips();
   }
   function importSnapshot(snapshot) {
     if (!snapshot?.trip || !snapshot?.data) throw new Error('클라우드 여행 데이터가 올바르지 않습니다.');
@@ -87,7 +88,8 @@
   $('#cloud-login-form').addEventListener('submit', async event => {
     event.preventDefault(); const email = $('#cloud-email').value.trim(); status('로그인 이메일을 보내는 중…');
     try {
-      await api('/auth/v1/otp', {method:'POST', headers:{apikey:publishableKey, 'Content-Type':'application/json'}, body:JSON.stringify({email, create_user:true, options:{emailRedirectTo:`${location.origin}${location.pathname}`}})});
+      const redirectTo = encodeURIComponent(`${location.origin}${location.pathname}`);
+      await api(`/auth/v1/otp?redirect_to=${redirectTo}`, {method:'POST', headers:{apikey:publishableKey, 'Content-Type':'application/json'}, body:JSON.stringify({email, create_user:true})});
       status(`${email}로 로그인 링크를 보냈습니다. 같은 브라우저에서 링크를 열어주세요.`);
     } catch (error) { status(`로그인 링크 전송 실패: ${error.message}`); }
   });
