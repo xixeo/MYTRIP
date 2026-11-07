@@ -22,6 +22,19 @@
   const scheduleDialog = $('#schedule-editor-dialog');
   const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
   const id = prefix => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  let migratedBuiltInSchedules = false;
+  const migratedPlaceIds = new Map();
+  for (const item of state.schedule) {
+    const source = builtInPlaces[item.placeId];
+    if (!source) continue;
+    let localId = migratedPlaceIds.get(item.placeId) || state.places.find(place => place.sourceId === item.placeId)?.id;
+    if (!localId) {
+      localId = id('place'); migratedPlaceIds.set(item.placeId, localId);
+      state.places.push({id:localId, sourceId:item.placeId, name:source.name || '', type:source.type || '기타', country:window.MYTRIP_ACTIVE_TRIP?.country || '', address:source.address || source.area || '', localName:'', phone:source.phone || '', website:source.source || source.booking || '', lat:source.coordinates?.lat ?? null, lon:source.coordinates?.lon ?? null, checkedAt:'', note:source.note || '', updatedAt:new Date().toISOString()});
+    }
+    item.placeId = localId; migratedBuiltInSchedules = true;
+  }
+  if (migratedBuiltInSchedules) save();
   const value = selector => $(selector).value.trim();
   const setValue = (selector, next = '') => { $(selector).value = next ?? ''; };
   const resolvedPlace = placeId => state.places.find(place => place.id === placeId) || builtInPlaces[placeId];
@@ -88,12 +101,12 @@
   }
 
   function allSchedulePlaces() {
-    return [...state.places.map(place => ({placeId:place.id, name:place.name, area:place.address, type:place.type, group:'내 장소'})), ...Object.entries(builtInPlaces).map(([placeId, place]) => ({placeId, name:place.name, area:place.area, type:place.type, group:'추천 장소'}))];
+    return state.places.map(place => ({placeId:place.id, name:place.name, area:place.address, type:place.type, group:'저장한 장소'}));
   }
   function renderPlaceOptions(selected) {
     const options = allSchedulePlaces();
     const select = $('#schedule-place'); select.replaceChildren();
-    for (const groupName of ['내 장소', '추천 장소']) {
+    for (const groupName of ['저장한 장소']) {
       const groupItems = options.filter(option => option.group === groupName); if (!groupItems.length) continue;
       const group = document.createElement('optgroup'); group.label = groupName;
       for (const item of groupItems) { const option = document.createElement('option'); option.value = item.placeId; option.textContent = item.name; option.selected = item.placeId === selected; group.append(option); }
@@ -108,7 +121,7 @@
     $('#schedule-place-results').replaceChildren(...matches.map(place => {
       const button = document.createElement('button'); button.type = 'button'; button.className = `schedule-place-option${place.placeId === selected ? ' is-selected' : ''}`;
       const copy = document.createElement('span'); const name = document.createElement('strong'); name.textContent = place.name; const meta = document.createElement('small'); meta.textContent = `${place.type} · ${place.area || '주소 미확인'}`; copy.append(name, meta);
-      const badge = document.createElement('em'); badge.textContent = place.group; button.append(copy, badge); button.addEventListener('click', () => selectSchedulePlace(place.placeId)); return button;
+      button.append(copy); button.addEventListener('click', () => selectSchedulePlace(place.placeId)); return button;
     }));
     if (!matches.length) { const empty = document.createElement('p'); empty.className = 'schedule-picker-empty'; empty.textContent = '검색 결과가 없어요. 새 장소를 만들어 바로 일정에 넣을 수 있어요.'; $('#schedule-place-results').append(empty); }
   }
