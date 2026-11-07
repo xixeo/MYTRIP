@@ -8,9 +8,10 @@
   let activeDay = tripDays[0].value;
   let editingPlaceId = null;
   let editingScheduleId = null;
-  let resumeScheduleAfterPlace = false;
-  let resumeScheduleId = null;
   let placeView = 'unscheduled';
+  let externalPlaceResults = [];
+  let placeSearchTimer = 0;
+  let placeSearchSequence = 0;
   let state = {places:[], schedule:[]};
   try {
     const legacy = window.MYTRIP_ACTIVE_TRIP?.template ? localStorage.getItem('mytrip-user-planner-v1') : null;
@@ -129,13 +130,25 @@
   function renderPlacePicker(query = '', selected = value('#schedule-place')) {
     const normalized = query.trim().toLowerCase();
     const matches = allSchedulePlaces().filter(place => !normalized || `${place.name} ${place.area} ${place.type}`.toLowerCase().includes(normalized)).slice(0, 12);
-    $('#schedule-place-results').replaceChildren(...matches.map(place => {
+    const resultBox=$('#schedule-place-results'); resultBox.replaceChildren();
+    const heading=text=>{const el=document.createElement('p');el.className='schedule-result-heading';el.textContent=text;resultBox.append(el);};
+    if(normalized && externalPlaceResults.length){heading('지도 검색 결과 · 선택하면 저장 후 일정에 연결');resultBox.append(...externalPlaceResults.map(result=>{const button=document.createElement('button');button.type='button';button.className='schedule-place-option external-place-option';const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=result.name || result.display_name.split(',')[0];const meta=document.createElement('small');meta.textContent=result.display_name;copy.append(name,meta);button.append(copy);button.addEventListener('click',()=>saveExternalPlace(result));return button;}));}
+    if(matches.length) heading(normalized?'이미 저장한 장소':'저장한 장소에서 선택');
+    resultBox.append(...matches.map(place => {
       const button = document.createElement('button'); button.type = 'button'; button.className = `schedule-place-option${place.placeId === selected ? ' is-selected' : ''}`;
       const copy = document.createElement('span'); const name = document.createElement('strong'); name.textContent = place.name; const meta = document.createElement('small'); meta.textContent = `${place.type} · ${place.area || '주소 미확인'}`; copy.append(name, meta);
       button.append(copy); button.addEventListener('click', () => selectSchedulePlace(place.placeId)); return button;
     }));
-    if (!matches.length) { const empty = document.createElement('p'); empty.className = 'schedule-picker-empty'; empty.textContent = '검색 결과가 없어요. 새 장소를 만들어 바로 일정에 넣을 수 있어요.'; $('#schedule-place-results').append(empty); }
+    if (!matches.length && (!normalized || !externalPlaceResults.length)) { const empty = document.createElement('p'); empty.className = 'schedule-picker-empty'; empty.textContent = normalized ? '지도 검색 결과를 불러오는 중이거나 결과가 없어요.' : '장소 이름이나 주소를 입력해 검색하세요.'; resultBox.append(empty); }
   }
+  const countryCode=()=>{const country=String(window.MYTRIP_ACTIVE_TRIP?.country || '').toLowerCase();if(/한국|korea|kor/.test(country))return'kr';if(/일본|japan|jpn/.test(country))return'jp';return'';};
+  const inferredType=result=>{const text=`${result.type} ${result.category} ${result.display_name}`.toLowerCase();if(/restaurant|food|cafe|bar|식당|카페/.test(text))return'식당';if(/hotel|hostel|숙소|호텔/.test(text))return'숙소';if(/shop|mall|store|쇼핑/.test(text))return'쇼핑';if(/station|airport|bus|rail|역|공항/.test(text))return'교통';return'관광';};
+  async function searchExternalPlaces(query) {
+    const sequence=++placeSearchSequence; $('#schedule-search-status').textContent='지도에서 장소를 검색하는 중…';
+    try{const code=countryCode();const params=new URLSearchParams({format:'jsonv2',q:query,addressdetails:'1',limit:'6','accept-language':'ko'});if(code)params.set('countrycodes',code);const response=await fetch(`https://nominatim.openstreetmap.org/search?${params}`);if(!response.ok)throw new Error(String(response.status));const results=await response.json();if(sequence!==placeSearchSequence)return;const savedAddresses=new Set(state.places.map(place=>place.address));externalPlaceResults=results.filter(result=>!savedAddresses.has(result.display_name));$('#schedule-search-status').textContent=externalPlaceResults.length?`지도 검색 결과 ${externalPlaceResults.length}개`:'지도 검색 결과가 없어요. 검색어를 더 구체적으로 입력하세요.';renderPlacePicker(query);
+    }catch(_){if(sequence!==placeSearchSequence)return;externalPlaceResults=[];$('#schedule-search-status').textContent='지도 검색을 불러오지 못했어요. 잠시 후 다시 시도하거나 아래에서 직접 입력하세요.';renderPlacePicker(query);}
+  }
+  function saveExternalPlace(result){const place={id:id('place'),name:result.name || result.display_name.split(',')[0],type:inferredType(result),country:result.address?.country || window.MYTRIP_ACTIVE_TRIP?.country || '',address:result.display_name,localName:'',phone:'',website:'',lat:Number(result.lat),lon:Number(result.lon),checkedAt:'',note:'지도 검색으로 저장',source:'OpenStreetMap',updatedAt:new Date().toISOString()};state.places.push(place);save();renderPlaces();externalPlaceResults=[];setValue('#schedule-place-search',place.name);renderPlaceOptions(place.id);selectSchedulePlace(place.id);$('#schedule-search-status').textContent='장소를 저장하고 일정에 연결했습니다.';}
   function selectSchedulePlace(placeId) {
     $('#schedule-place').value = placeId;
     const place = allSchedulePlaces().find(item => item.placeId === placeId);
@@ -152,7 +165,7 @@
   function openScheduleEditor(scheduleId = null, placeId = null) {
     editingScheduleId = scheduleId; const item = state.schedule.find(candidate => candidate.id === scheduleId);
     $('#schedule-editor-title').textContent = item ? '일정 수정' : '일정에 장소 추가'; $('#schedule-delete').hidden = !item; $('#schedule-duplicate').hidden = !item;
-    setValue('#schedule-place-search', ''); const selectedPlace = placeId || item?.placeId || ''; renderPlaceOptions(selectedPlace); selectSchedulePlace(selectedPlace); const daySelect = $('#schedule-day'); daySelect.replaceChildren(...tripDays.map(day => { const option = document.createElement('option'); option.value = day.value; option.textContent = day.label; return option; })); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); setValue('#schedule-travel-mode', item?.travelMode || ''); setValue('#schedule-travel-minutes', String(item?.travelMinutes ?? 0)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note); updateTravelFields(item);
+    externalPlaceResults=[];$('#schedule-search-status').textContent='';setValue('#schedule-place-search', ''); const selectedPlace = placeId || item?.placeId || ''; renderPlaceOptions(selectedPlace); selectSchedulePlace(selectedPlace); const daySelect = $('#schedule-day'); daySelect.replaceChildren(...tripDays.map(day => { const option = document.createElement('option'); option.value = day.value; option.textContent = day.label; return option; })); setValue('#schedule-day', item?.day || activeDay); setValue('#schedule-time', item?.time || '10:00'); setValue('#schedule-duration', String(item?.duration ?? 60)); setValue('#schedule-travel-mode', item?.travelMode || ''); setValue('#schedule-travel-minutes', String(item?.travelMinutes ?? 0)); $('#schedule-fixed').checked = item?.fixed || false; setValue('#schedule-note', item?.note); updateTravelFields(item);
     scheduleDialog.showModal();
   }
   function updateTravelFields(item = state.schedule.find(candidate => candidate.id === editingScheduleId)) {
@@ -174,7 +187,6 @@
     if (editingPlaceId) state.places = state.places.map(place => place.id === editingPlaceId ? {...place, ...input} : place);
     else { savedId = id('place'); state.places.push({id:savedId, ...input}); }
     save(); placeDialog.close(); renderPlaces(); renderSchedule();
-    if (resumeScheduleAfterPlace) { const scheduleId = resumeScheduleId; resumeScheduleAfterPlace = false; resumeScheduleId = null; openScheduleEditor(scheduleId, savedId); }
   });
   $('#schedule-editor-form').addEventListener('submit', event => {
     event.preventDefault(); const placeId = value('#schedule-place'); if (!placeId) { $('#schedule-selected-place').textContent = '장소를 먼저 선택해 주세요.'; $('#schedule-selected-place').classList.add('is-error'); return; } $('#schedule-selected-place').classList.remove('is-error');
@@ -191,10 +203,9 @@
     const copy = {...source, id:id('schedule'), order:(source.order ?? 0) + 1, status:'planned', fixed:false, note:source.note ? `${source.note} · 복제` : '복제한 일정', updatedAt:new Date().toISOString()}; state.schedule.push(copy); save(); scheduleDialog.close(); renderSchedule(); openScheduleEditor(copy.id);
   });
   $('#place-add').addEventListener('click', () => openPlaceEditor()); $('#schedule-add').addEventListener('click', () => openScheduleEditor());
-  $('#schedule-place-search').addEventListener('input', event => renderPlacePicker(event.target.value));
+  $('#schedule-place-search').addEventListener('input', event => {const query=event.target.value.trim();externalPlaceResults=[];clearTimeout(placeSearchTimer);renderPlacePicker(query);if(query.length>=2)placeSearchTimer=setTimeout(()=>searchExternalPlaces(query),450);else $('#schedule-search-status').textContent='';});
   $('#schedule-day').addEventListener('change', () => updateTravelFields());
-  $('#schedule-new-place').addEventListener('click', () => { resumeScheduleAfterPlace = true; resumeScheduleId = editingScheduleId; scheduleDialog.close(); openPlaceEditor(); });
-  document.querySelectorAll('[data-close-place-editor]').forEach(button => button.addEventListener('click', () => { placeDialog.close(); if (resumeScheduleAfterPlace) { const scheduleId = resumeScheduleId; resumeScheduleAfterPlace = false; resumeScheduleId = null; openScheduleEditor(scheduleId); } }));
+  document.querySelectorAll('[data-close-place-editor]').forEach(button => button.addEventListener('click', () => placeDialog.close()));
   document.querySelectorAll('[data-close-schedule-editor]').forEach(button => button.addEventListener('click', () => scheduleDialog.close()));
   $('#place-search')?.addEventListener('input', renderPlaces); $('#user-place-search').addEventListener('input',renderPlaces);
   $('#place-unscheduled-filter').addEventListener('click',()=>{placeView='unscheduled';$('#place-unscheduled-filter').setAttribute('aria-pressed','true');$('#place-all-filter').setAttribute('aria-pressed','false');renderPlaces();});

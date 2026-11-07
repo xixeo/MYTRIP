@@ -10,6 +10,7 @@ const {chromium} = require('playwright-core');
   const cloudSavePromise = new Promise(resolve => { resolveCloudSave = resolve; });
   page.on('pageerror', error => console.error('PAGE ERROR', error));
   await page.route(/api\.frankfurter\.dev\/v1\/latest/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({amount:1, base:'JPY', date:'2026-11-06', rates:{KRW:8.4863}})}));
+  await page.route(/nominatim\.openstreetmap\.org\/search/, route => { const query=new URL(route.request().url()).searchParams.get('q') || ''; const shibuya=query.includes('시부야'); const result=shibuya?{place_id:2,name:'시부야 스카이',display_name:'시부야 스카이, 시부야, 도쿄, 일본',lat:'35.6580',lon:'139.7016',type:'attraction',address:{country:'일본'}}:{place_id:1,name:'도쿄역',display_name:'도쿄역, 마루노우치, 도쿄, 일본',lat:'35.6812',lon:'139.7671',type:'station',address:{country:'일본'}}; return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([result])}); });
   await page.route('https://example.com/product.png', route => route.fulfill({status:200, contentType:'image/svg+xml', body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#a8c6f5"/><text x="40" y="45" text-anchor="middle">A</text></svg>'}));
   await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/rest\/v1\/mytrip_snapshots/, async route => {
     if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); resolveCloudSave(); return route.fulfill({status:201, contentType:'application/json', body:''}); }
@@ -61,12 +62,11 @@ const {chromium} = require('playwright-core');
 
   step('create schedule and place');
   await page.click('#schedule-add');
-  await page.click('#schedule-new-place');
-  await page.fill('#place-name', '도쿄역');
-  await page.selectOption('#place-type', '교통');
-  await page.fill('#place-address', '1 Chome Marunouchi, Chiyoda City, Tokyo');
-  await page.click('#place-editor-form button[type="submit"]');
+  await page.fill('#schedule-place-search', '도쿄역');
+  await page.waitForSelector('.external-place-option');
+  await page.click('.external-place-option');
   await page.waitForFunction(() => document.querySelector('#schedule-selected-place')?.textContent.includes('도쿄역'));
+  const inputColors=await page.locator('#schedule-place-search').evaluate(el=>({color:getComputedStyle(el).color,fill:getComputedStyle(el).webkitTextFillColor})); if(inputColors.color==='rgba(0, 0, 0, 0)' || inputColors.fill==='rgba(0, 0, 0, 0)') throw new Error(`입력 글씨색 오류: ${JSON.stringify(inputColors)}`);
   await page.fill('#schedule-time', '09:00');
   await page.fill('#schedule-duration', '40');
   await page.click('#schedule-editor-form button[type="submit"]');
@@ -74,11 +74,9 @@ const {chromium} = require('playwright-core');
 
   step('second place and conflict');
   await page.click('#schedule-add');
-  await page.click('#schedule-new-place');
-  await page.fill('#place-name', '시부야 스카이');
-  await page.selectOption('#place-type', '관광');
-  await page.fill('#place-address', '2 Chome Shibuya, Tokyo');
-  await page.click('#place-editor-form button[type="submit"]');
+  await page.fill('#schedule-place-search', '시부야 스카이');
+  await page.waitForSelector('.external-place-option');
+  await page.click('.external-place-option');
   await page.waitForFunction(() => document.querySelector('#schedule-selected-place')?.textContent.includes('시부야 스카이'));
   await page.fill('#schedule-time', '09:30');
   await page.fill('#schedule-duration', '30');

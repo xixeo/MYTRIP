@@ -189,7 +189,7 @@
       </header>
       <div class="window-body">
         <section class="place-manager" aria-labelledby="my-places-title">
-          <div class="user-section-head"><div><p class="shopping-kicker">SAVED PLACES</p><h3 id="my-places-title">저장한 장소</h3><p>아직 일정에 넣지 않은 후보와 대안을 보관하고 필요할 때 추가하세요.</p></div><button id="place-add" class="button primary" type="button">+ 새 장소</button></div>
+          <div class="user-section-head"><div><p class="shopping-kicker">SAVED PLACES</p><h3 id="my-places-title">저장한 장소</h3><p>일정 검색에서 고른 후보와 대안을 보관합니다. 검색되지 않는 장소만 직접 입력하세요.</p></div><button id="place-add" class="button secondary" type="button">검색 안 되는 장소 직접 입력</button></div>
           <div class="saved-place-toolbar"><label><span>저장 장소 검색</span><input id="user-place-search" type="search" placeholder="장소 이름이나 주소 검색"></label><div class="chips" role="group" aria-label="저장 장소 범위"><button class="chip" id="place-unscheduled-filter" type="button" aria-pressed="true">일정 미배치</button><button class="chip" id="place-all-filter" type="button" aria-pressed="false">전체</button></div></div>
           <p id="user-place-empty" class="trip-hint">아직 직접 등록한 장소가 없어요.</p>
           <div id="user-place-grid" class="user-place-grid"></div>
@@ -245,8 +245,10 @@
       <p class="shopping-kicker">SCHEDULE</p><h2 id="schedule-editor-title">일정에 장소 추가</h2>
       <div class="schedule-place-picker">
         <label><span>저장한 장소</span><input id="schedule-place-search" type="search" placeholder="장소 이름이나 주소 검색" autocomplete="off"></label>
-        <div class="schedule-picker-head"><strong id="schedule-selected-place">장소를 선택하세요</strong><button id="schedule-new-place" class="button secondary" type="button">+ 새 장소 만들기</button></div>
+        <div class="schedule-picker-head"><strong id="schedule-selected-place">장소 이름이나 주소를 검색하세요</strong></div>
         <div id="schedule-place-results" class="schedule-place-results"></div>
+        <p id="schedule-search-status" class="schedule-search-status" aria-live="polite"></p>
+        <p class="map-search-credit">장소 검색: OpenStreetMap · 선택 후 해외는 Google Maps, 한국은 네이버 지도·티맵으로 연결</p>
         <select id="schedule-place" hidden aria-label="선택한 장소"></select>
       </div>
       <div class="editor-grid schedule-details">
