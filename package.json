@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "serve -l 4173 .",
-    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check imported-hokkaido.js && node --check trip-manager.js && node --check cloud-sync.js && node --check shopping.js && node --check travel-info.js && node --check planner-editor.js && node scripts/validate-shopping-content.js && node scripts/validate-planner-markup.js && node scripts/validate-trip-markup.js && node scripts/validate-travel-info.js && node scripts/validate-seeded-trip.js",
+    "test": "node --check app.js && node --check data.js && node --check expanded.js && node --check menus.js && node --check parking.js && node --check imported-hokkaido.js && node --check trip-manager.js && node --check cloud-sync.js && node --check shopping.js && node --check travel-info.js && node --check planner-editor.js && node --check mobile-nav.js && node scripts/validate-shopping-content.js && node scripts/validate-planner-markup.js && node scripts/validate-trip-markup.js && node scripts/validate-travel-info.js && node scripts/validate-seeded-trip.js",
     "test:e2e": "node scripts/e2e-flow.js",
     "test:quality": "node scripts/quality-audit.js",
     "test:mobile": "node scripts/mobile-audit.js"
