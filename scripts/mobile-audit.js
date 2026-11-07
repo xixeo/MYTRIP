@@ -25,11 +25,19 @@ const {chromium} = require('playwright-core');
     await page.click('#schedule-add');
     const scheduleDialog = await page.evaluate(() => { const r=document.querySelector('#schedule-editor-dialog').getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,viewport:[innerWidth,innerHeight]}; });
     await page.click('[data-close-schedule-editor]'); await page.click('#trip-list-open');
-    const tripDialog = await page.evaluate(() => { const r=document.querySelector('#trip-list-dialog').getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,viewport:[innerWidth,innerHeight]}; });
+    const tripDialog = await page.evaluate(() => {
+      const r=document.querySelector('#trip-list-dialog').getBoundingClientRect();
+      const close=document.querySelector('#trip-list-close').getBoundingClientRect();
+      const head=document.querySelector('.trip-dialog-head').getBoundingClientRect();
+      const title=document.querySelector('#trip-list-title').getBoundingClientRect();
+      const create=document.querySelector('#trip-create').getBoundingClientRect();
+      const overlaps=(a,b)=>a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,viewport:[innerWidth,innerHeight],headerOverlap:overlaps(close,title)||overlaps(close,create),headRight:head.right,closeLeft:close.left};
+    });
     const dialogsFit = [scheduleDialog,tripDialog].every(r => r.left >= 0 && r.right <= r.viewport[0] && r.top >= 0 && r.bottom <= r.viewport[1]);
     const result = {...base, dialogsFit, errors};
     const mobileNavExpected = device.name !== 'landscape' || device.width <= 620;
-    if (base.overflow > 1 || base.clipped.length || base.tinyTargets.length || !dialogsFit || errors.length || (mobileNavExpected && (!base.navFixed || Math.abs(base.navBottomGap) > 1))) failures.push({device:device.name,...result,scheduleDialog,tripDialog});
+    if (base.overflow > 1 || base.clipped.length || base.tinyTargets.length || !dialogsFit || tripDialog.headerOverlap || errors.length || (mobileNavExpected && (!base.navFixed || Math.abs(base.navBottomGap) > 1))) failures.push({device:device.name,...result,scheduleDialog,tripDialog});
     console.log(`${device.name}: overflow ${base.overflow}px · clipped ${base.clipped.length} · tiny targets ${base.tinyTargets.length} · nav ${base.navFixed ? 'fixed' : 'header'} · dialogs ${dialogsFit ? 'fit' : 'fail'} · errors ${errors.length}`);
     await page.close();
   }
