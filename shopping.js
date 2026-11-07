@@ -120,9 +120,9 @@
   }
   form.addEventListener('submit', async event => {
     event.preventDefault(); const name = $('#shopping-name').value.trim(); if (!name) return;
-    let imageUrl=$('#shopping-image').value.trim();try{imageUrl=await resizedImage($('#shopping-image-file')) || imageUrl;}catch(error){alert(error.message);return;}
+    let imageUrl=$('#shopping-image').value.trim() || $('#shopping-image').dataset.importedImage || '';try{imageUrl=await resizedImage($('#shopping-image-file')) || imageUrl;}catch(error){alert(error.message);return;}
     addItem({name, store:$('#shopping-store').value.trim(), category:$('#shopping-category').value, currency:$('#shopping-currency').value, quantity:Math.max(1, Number($('#shopping-quantity').value) || 1), price:Math.max(0, Number($('#shopping-price').value) || 0), imageUrl, note:$('#shopping-note').value.trim(), done:false});
-    form.reset(); $('#shopping-quantity').value = '1'; $('#shopping-currency').value = defaultCurrency; $('#shopping-name').focus();
+    form.reset(); delete $('#shopping-image').dataset.importedImage; $('#shopping-quantity').value = '1'; $('#shopping-currency').value = defaultCurrency; $('#shopping-name').focus();
   });
   $('#shopping-clear-complete').addEventListener('click', () => { items = items.filter(item => !item.done); save(); render(); });
   $('#shopping-list-search').addEventListener('input', () => { listLimit = 12; render(true); });
