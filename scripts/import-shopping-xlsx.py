@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Extract the Shopping sheet and anchored product images from a Google Sheets XLSX export."""
-import json, re, shutil, subprocess, sys, tempfile, zipfile
+import hashlib, json, re, shutil, subprocess, sys, tempfile, zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -98,7 +98,8 @@ with tempfile.TemporaryDirectory() as tmp_name:
         if row_number in images:
             target = asset_dir / f'sheet-{row_number}.webp'
             subprocess.run(['magick', str(tmp/'xl/media'/images[row_number]), '-auto-orient', '-thumbnail', '420x420^', '-gravity', 'center', '-extent', '420x420', '-quality', '76', str(target)], check=True)
-            image_url = f'./assets/shopping/{target.name}'
+            digest = hashlib.sha256(target.read_bytes()).hexdigest()[:12]
+            image_url = f'./assets/shopping/{target.name}?v={digest}'
         note = ' · '.join(part for part in [row.get('F','').strip(), row.get('H','').strip()] if part)
         products.append({
             'id': f'sheet-shopping-{row_number}', 'name': name, 'localName': row.get('C','').strip(),
