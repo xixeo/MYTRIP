@@ -70,7 +70,7 @@
       localStorage.setItem(sheetV2Marker, '1');
     } catch (_) { /* 기존 사용자 데이터가 손상된 경우 임의로 덮어쓰지 않는다. */ }
   }
-  const shoppingSheetMarker = 'mytrip-hokkaido-shopping-sheet-v1';
+  const shoppingSheetMarker = 'mytrip-hokkaido-shopping-sheet-v2';
   if (Array.isArray(window.MYTRIP_HOKKAIDO_SHOPPING_V1) && !localStorage.getItem(shoppingSheetMarker)) {
     const key = 'weekend-trip-shopping-v2:hokkaido-2026-11';
     let existing = [];
@@ -85,7 +85,7 @@
         sheetCategory:item.sheetCategory,
         sourceUrl:item.sourceUrl,
         sourceRow:item.sourceRow,
-        imageUrl:old.imageUrl || item.imageUrl
+        imageUrl:old.imageUrl && !old.imageUrl.startsWith('./assets/shopping/sheet-') ? old.imageUrl : item.imageUrl
       } : item;
     });
     localStorage.setItem(key, JSON.stringify(imported));

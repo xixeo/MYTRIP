@@ -27,7 +27,11 @@ with tempfile.TemporaryDirectory() as tmp_name:
         shared.append(''.join(node.text or '' for node in item.iter(f'{{{MAIN}}}t')))
     rows = {}
     sheet = ET.parse(tmp/'xl/worksheets/sheet2.xml').getroot()
+    sheet_format = sheet.find(f'{{{MAIN}}}sheetFormatPr')
+    default_row_height = float(sheet_format.attrib.get('defaultRowHeight', '15'))
+    row_heights = {}
     for row in sheet.findall(f'.//{{{MAIN}}}sheetData/{{{MAIN}}}row'):
+        row_heights[int(row.attrib['r'])] = float(row.attrib.get('ht', default_row_height))
         values = {}
         for cell in row.findall(f'{{{MAIN}}}c'):
             column = re.match(r'[A-Z]+', cell.attrib['r']).group()
@@ -37,14 +41,34 @@ with tempfile.TemporaryDirectory() as tmp_name:
         rows[int(row.attrib['r'])] = values
     rels = {item.attrib['Id']: Path(item.attrib['Target']).name for item in ET.parse(tmp/'xl/drawings/_rels/drawing2.xml.rels').getroot()}
     images = {}
+    def row_height_emu(row_number):
+        return row_heights.get(row_number, default_row_height) * 12700
+
+    def image_center_row(anchor):
+        origin = anchor.find(f'{{{DRAW}}}from')
+        extent = anchor.find(f'{{{DRAW}}}ext')
+        origin_row = int(origin.find(f'{{{DRAW}}}row').text)
+        row_offset = int(origin.find(f'{{{DRAW}}}rowOff').text)
+        image_height = int(extent.attrib['cy'])
+        center = sum(row_height_emu(row) for row in range(1, origin_row + 1)) + row_offset + image_height / 2
+        bottom = 0
+        for row_number in range(1, max(rows) + 2):
+            bottom += row_height_emu(row_number)
+            if center < bottom:
+                return row_number
+        raise ValueError('image center is outside the shopping sheet')
+
     for anchor in ET.parse(tmp/'xl/drawings/drawing2.xml').getroot():
         origin = anchor.find(f'{{{DRAW}}}from')
         picture = anchor.find(f'{{{DRAW}}}pic')
-        if origin is None or picture is None:
+        extent = anchor.find(f'{{{DRAW}}}ext')
+        if origin is None or extent is None or picture is None:
             continue
-        row_number = int(origin.find(f'{{{DRAW}}}row').text) + 1
+        row_number = image_center_row(anchor)
         blip = picture.find(f'.//{{{A}}}blip')
-        images.setdefault(row_number, rels[blip.attrib[f'{{{REL}}}embed']])
+        if row_number in images:
+            raise ValueError(f'multiple product images resolve to row {row_number}')
+        images[row_number] = rels[blip.attrib[f'{{{REL}}}embed']]
 
     def price(text):
         text = str(text or '').strip()

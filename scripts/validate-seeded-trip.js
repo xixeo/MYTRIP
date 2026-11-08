@@ -17,6 +17,6 @@ if (info.reservations.length < 5 || info.checklist.length !== 7 || enhancement.c
 if (enhancement.alternatives.reduce((sum,item)=>sum+item.sourceRows,0) !== 8 || enhancement.alternatives.length !== 6) throw new Error('대안 행 분류 누락');
 if (planner.schedule.length + enhancement.alternatives.reduce((sum,item)=>sum+item.sourceRows,0) + enhancement.checklistNames.length !== 66) throw new Error('Google Sheets 66행 분류 불일치');
 const sheetShopping=context.window.MYTRIP_HOKKAIDO_SHOPPING_V1;
-if(sheetShopping.length!==80 || sheetShopping.filter(item=>item.imageUrl).length!==50) throw new Error('쇼핑 전용 시트 상품·이미지 변환 누락');
+if(sheetShopping.length!==80 || sheetShopping.filter(item=>item.imageUrl).length!==52) throw new Error('쇼핑 전용 시트 상품·이미지 변환 누락');
 for (const item of planner.schedule) if (!planner.places.some(place => place.id === item.placeId)) throw new Error(`일정 장소 연결 누락: ${item.id}`);
 console.log(`홋카이도 일정 66행 · 쇼핑 전용 탭 ${sheetShopping.length}개(이미지 ${sheetShopping.filter(item=>item.imageUrl).length}개) 반영`);
