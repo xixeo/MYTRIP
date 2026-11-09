@@ -51,6 +51,7 @@ const {chromium} = require('playwright-core');
   await page.fill('#product-search-query', '외부 상품');
   const googleShoppingHref = await page.locator('#product-google-search').getAttribute('href');
   if (!googleShoppingHref.includes('google.com/search') || !googleShoppingHref.includes('q=')) throw new Error(`Google 쇼핑 연결 오류: ${googleShoppingHref}`);
+  await page.click('#product-search-form button[type="submit"]');
   await page.waitForSelector('.product-result-card');
   await page.click('.product-result-card .button');
   if (await page.inputValue('#shopping-name') !== '외부 검색 상품' || await page.inputValue('#shopping-price') !== '') throw new Error('외부 검색 상품 정보가 수동 입력 폼에 반영되지 않았습니다.');
@@ -60,8 +61,15 @@ const {chromium} = require('playwright-core');
 
   step('create trip');
   await page.click('#trip-list-open');
-  const tripGroups = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.trip-list-group')].map(group => [group.dataset.tripPeriod, group.querySelectorAll('.trip-list-card').length])));
-  if (tripGroups.current !== 1 || tripGroups.upcoming !== 1 || tripGroups.past !== 0) throw new Error(`여행 목록 기간 분류 오류: ${JSON.stringify(tripGroups)}`);
+  const tripGroups = await page.evaluate(() => {
+    const actual = Object.fromEntries([...document.querySelectorAll('.trip-list-group')].map(group => [group.dataset.tripPeriod, group.querySelectorAll('.trip-list-card').length]));
+    const expected = {current:0, upcoming:0, past:0};
+    const today = new Date().toLocaleDateString('en-CA');
+    const registry = JSON.parse(localStorage.getItem('mytrip-trip-registry-v1'));
+    registry.trips.forEach(trip => { expected[trip.endDate < today ? 'past' : trip.startDate > today ? 'upcoming' : 'current'] += 1; });
+    return {actual, expected};
+  });
+  if (JSON.stringify(tripGroups.actual) !== JSON.stringify(tripGroups.expected)) throw new Error(`여행 목록 기간 분류 오류: ${JSON.stringify(tripGroups)}`);
   await page.click('#trip-create');
   await page.fill('#trip-name', '도쿄 테스트 여행');
   await page.fill('#trip-destination', '도쿄');

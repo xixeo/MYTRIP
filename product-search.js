@@ -10,7 +10,6 @@
   const googleLink = $('#product-google-search');
   const defaultCurrency = /일본|japan/i.test(window.MYTRIP_ACTIVE_TRIP?.country || '') ? 'JPY' : 'KRW';
   let searchSequence = 0;
-  let searchTimer = null;
 
   const normalized = value => String(value || '')
     .normalize('NFKC')
@@ -78,7 +77,6 @@
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    clearTimeout(searchTimer);
     const query = $('#product-search-query').value.trim();
     if (query.length < 2) return;
     const sequence = ++searchSequence;
@@ -90,26 +88,29 @@
       if (sequence !== searchSequence) return;
       const unique = [...new Map(remote.map(item => [compact(item.name), item])).values()].slice(0, 12);
       render(unique);
-      status.textContent = unique.length ? `외부 공개 상품 ${unique.length}개를 찾았습니다. 원하는 상품의 정보를 가져오세요.` : '공개 상품 결과가 없어요. Google 쇼핑에서 확인하거나 아래에서 직접 입력하세요.';
+      status.textContent = unique.length ? `Open Food Facts에서 ${unique.length}개를 찾았습니다. 원하는 상품의 정보를 가져오세요.` : 'Open Food Facts에는 결과가 없습니다. Google 쇼핑 결과와는 별개이며, Google에서 확인한 내용은 아래에 직접 입력할 수 있어요.';
     } catch (_) {
       if (sequence !== searchSequence) return;
-      status.textContent = '공개 상품 정보를 불러오지 못했어요. Google 쇼핑에서 확인하거나 아래에서 직접 입력하세요.';
+      status.textContent = 'Open Food Facts를 불러오지 못했습니다. Google 쇼핑 결과와는 관계없는 오류이며, 아래에서 직접 입력할 수 있어요.';
     }
   });
 
   $('#product-search-query').addEventListener('input', event => {
     const query = event.target.value.trim();
     googleLink.href = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(query)}`;
-    clearTimeout(searchTimer);
     searchSequence += 1;
+    results.replaceChildren();
     if (query.length < 2) {
-      results.replaceChildren();
-      status.textContent = '두 글자 이상 입력하면 자동으로 검색해요.';
+      status.textContent = '두 글자 이상 입력한 뒤 검색 방법을 선택하세요.';
       return;
     }
-    results.replaceChildren();
-    status.textContent = '공개 상품 정보를 곧 검색해요. Google 쇼핑은 버튼을 누르면 바로 열립니다.';
-    searchTimer = setTimeout(() => form.requestSubmit(), 550);
+    status.textContent = 'Google 쇼핑은 실제 판매 결과를 새 탭에서 열고, 공개 식품 DB는 별도 자료를 검색합니다.';
+  });
+  googleLink.addEventListener('click', () => {
+    const query = $('#product-search-query').value.trim();
+    status.textContent = query.length >= 2
+      ? 'Google 쇼핑 결과를 새 탭에서 열었습니다. 현재는 Google 결과를 앱으로 자동 가져오지 않으므로 필요한 값은 아래에 직접 입력하세요.'
+      : 'Google 쇼핑에서 검색할 상품명을 두 글자 이상 입력하세요.';
   });
   $('#shopping-image').addEventListener('input', event => {
     delete event.currentTarget.dataset.importedImage;
