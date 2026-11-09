@@ -125,13 +125,19 @@
         </section>
         <section class="product-search" aria-labelledby="product-search-title">
           <div class="shopping-section-head"><div><p class="shopping-kicker">PRODUCT SEARCH</p><h3 id="product-search-title">상품 검색해서 추가</h3></div></div>
-          <p class="product-search-help">Google 쇼핑은 실제 판매 상품과 가격을 새 탭에서 보여줍니다. ‘공개 식품 DB 검색’은 별도의 Open Food Facts 자료에서 제품명·이미지를 가져오며 Google 결과와는 다릅니다.</p>
+          <p class="product-search-help">Google 쇼핑 결과의 제품명·이미지·판매처·가격을 불러와 쇼핑리스트에 바로 등록합니다. 처음 한 번만 검색 API를 연결하세요.</p>
           <form id="product-search-form" class="product-search-form">
             <label><span>찾을 상품</span><input id="product-search-query" type="search" minlength="2" maxlength="80" required placeholder="예: 오니츠카 타이거 MEXICO 66"></label>
-            <a id="product-google-search" class="button primary" href="https://www.google.com/search?tbm=shop" target="_blank" rel="noreferrer">Google 쇼핑 검색 ↗</a>
-            <button class="button secondary" type="submit">공개 식품 DB 검색</button>
+            <label><span>검색 국가</span><select id="product-search-market"><option value="jp">일본</option><option value="kr">한국</option><option value="us">미국</option></select></label>
+            <button class="button primary" type="submit">Google 결과 가져오기</button>
+            <a id="product-google-search" class="button secondary" href="https://www.google.com/search?tbm=shop" target="_blank" rel="noreferrer">Google에서 직접 보기 ↗</a>
           </form>
-          <p id="product-search-status" class="product-search-status" role="status">검색어를 입력한 뒤 Google 쇼핑 또는 공개 식품 DB 중 원하는 검색을 선택하세요.</p>
+          <details id="product-search-setup" class="product-search-setup">
+            <summary>Google 검색 API 연결</summary>
+            <div class="product-search-key-row"><label><span>SerpAPI API 키</span><input id="product-search-api-key" type="password" autocomplete="off" placeholder="이 브라우저에만 저장됩니다"></label><button id="product-search-save-key" class="button secondary" type="button">키 저장</button><button id="product-search-remove-key" class="button secondary" type="button">키 삭제</button></div>
+            <p><a href="https://serpapi.com/manage-api-key" target="_blank" rel="noreferrer">SerpAPI 키 확인 ↗</a> · 키는 MYTRIP 서버나 GitHub에 저장되지 않습니다.</p>
+          </details>
+          <p id="product-search-status" class="product-search-status" role="status">API 키를 저장하면 Google 쇼핑 결과를 앱 안에서 검색할 수 있어요.</p>
           <div id="product-search-results" class="product-search-results"></div>
         </section>
         <h3 class="shopping-form-title">직접 추가</h3>

@@ -11,7 +11,7 @@ const {chromium} = require('playwright-core');
   page.on('pageerror', error => console.error('PAGE ERROR', error));
   await page.route(/api\.frankfurter\.dev\/v1\/latest/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({amount:1, base:'JPY', date:'2026-11-06', rates:{KRW:8.4863}})}));
   await page.route(/nominatim\.openstreetmap\.org\/search/, route => { const query=new URL(route.request().url()).searchParams.get('q') || ''; const shibuya=query.includes('시부야'); const result=shibuya?{place_id:2,name:'시부야 스카이',display_name:'시부야 스카이, 시부야, 도쿄, 일본',lat:'35.6580',lon:'139.7016',type:'attraction',address:{country:'일본'}}:{place_id:1,name:'도쿄역',display_name:'도쿄역, 마루노우치, 도쿄, 일본',lat:'35.6812',lon:'139.7671',type:'station',address:{country:'일본'}}; return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([result])}); });
-  await page.route(/world\.openfoodfacts\.org\/cgi\/search\.pl/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({products:[{code:'test-product',product_name_ko:'외부 검색 상품',product_name:'External product',brands:'테스트 브랜드',image_front_url:'https://example.com/product.png'}]})}));
+  await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/functions\/v1\/google-shopping-search/, route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({results:[{id:'google-test-product',name:'칼디 스프레드',store:'Google 테스트 판매처',price:7500,priceText:'₩7,500',currency:'JPY',imageUrl:'https://example.com/product.png',sourceUrl:'https://example.com/product'}]})}));
   await page.route('https://example.com/product.png', route => route.fulfill({status:200, contentType:'image/svg+xml', body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#a8c6f5"/><text x="40" y="45" text-anchor="middle">A</text></svg>'}));
   await page.route(/efwgdroqjgfhuvkjkger\.supabase\.co\/rest\/v1\/mytrip_snapshots/, async route => {
     if (route.request().method() === 'POST') { cloudSaved = JSON.parse(route.request().postData()); resolveCloudSave(); return route.fulfill({status:201, contentType:'application/json', body:''}); }
@@ -21,7 +21,7 @@ const {chromium} = require('playwright-core');
   const step = name => console.log(`STEP ${name}`);
   step('open');
   await page.goto('http://127.0.0.1:4173/', {waitUntil:'domcontentloaded'});
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('mytrip-supabase-session-v1', JSON.stringify({access_token:'test-token', refresh_token:'test-refresh', expires_at:Math.floor(Date.now() / 1000) + 3600, user:{id:'00000000-0000-0000-0000-000000000001'}})); });
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('mytrip-serpapi-key-v1','test-serpapi-key'); localStorage.setItem('mytrip-supabase-session-v1', JSON.stringify({access_token:'test-token', refresh_token:'test-refresh', expires_at:Math.floor(Date.now() / 1000) + 3600, user:{id:'00000000-0000-0000-0000-000000000001'}})); });
   await page.reload({waitUntil:'domcontentloaded'});
 
   step('seeded Hokkaido sheet trip');
@@ -48,13 +48,14 @@ const {chromium} = require('playwright-core');
   await page.waitForFunction(() => document.querySelector('#shopping-list')?.textContent.includes('¥17,600~') && document.querySelector('#shopping-list')?.textContent.includes('한국 가격'));
   if (await page.locator('#shopping-list img[src*="assets/shopping/sheet-"]').count() < 1) throw new Error('Google Sheets 상품 이미지가 표시되지 않습니다.');
   if (!await page.locator('#shopping-list').textContent().then(text => text.includes('MEXICO 66 TGRS'))) throw new Error('쇼핑 시트 현지 상품명이 표시되지 않습니다.');
-  await page.fill('#product-search-query', '외부 상품');
+  await page.fill('#product-search-query', '칼디 스프레드');
   const googleShoppingHref = await page.locator('#product-google-search').getAttribute('href');
   if (!googleShoppingHref.includes('google.com/search') || !googleShoppingHref.includes('q=')) throw new Error(`Google 쇼핑 연결 오류: ${googleShoppingHref}`);
   await page.click('#product-search-form button[type="submit"]');
   await page.waitForSelector('.product-result-card');
   await page.click('.product-result-card .button');
-  if (await page.inputValue('#shopping-name') !== '외부 검색 상품' || await page.inputValue('#shopping-price') !== '') throw new Error('외부 검색 상품 정보가 수동 입력 폼에 반영되지 않았습니다.');
+  const registeredGoogleProduct = await page.evaluate(() => JSON.parse(localStorage.getItem('weekend-trip-shopping-v2:hokkaido-2026-11') || '[]').find(item => item.name === '칼디 스프레드'));
+  if (!registeredGoogleProduct || registeredGoogleProduct.price !== 7500 || registeredGoogleProduct.imageUrl !== 'https://example.com/product.png') throw new Error(`Google 검색 결과 바로 등록 오류: ${JSON.stringify(registeredGoogleProduct)}`);
   await page.click('#alternative-list .button');
   await page.waitForFunction(() => document.querySelector('#schedule-selected-place')?.textContent.includes('타키나미'));
   await page.click('[data-close-schedule-editor]');
